@@ -1,0 +1,242 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import sys
+import socket
+import json
+import time
+import threading
+from threading import Thread
+from queue import Queue
+
+# These are our global objects (and locks for them).
+global tx_queue
+global tx_lock
+global rx_queue
+global rx_lock
+global spots_lock
+global s
+
+s=False
+tx_queue=Queue()
+tx_lock=threading.Lock()
+rx_queue=Queue()
+rx_lock=threading.Lock()
+spots_lock=threading.Lock()
+
+# These globals represent the state of JS8Call.
+global spots
+global dial
+global freq
+global offset
+global grid
+global info
+global ptt
+global speed
+
+spots={}
+
+# Add a message to the outgoing message queue.
+def queue_message(message):
+    global tx_queue
+    global tx_lock
+    with tx_lock:
+        tx_queue.put(message)
+
+# This thread watches the transmit queue and sends data to JS8
+# whenever something appears in the queue.
+def tx_thread(name):
+    global tx_queue
+    global tx_lock
+    # Run forever. Delay 0.25 seconds between each send, because
+    # sending too quickly jacks up comms with JS8. There's a python
+    # version check here, because Python3 broke the lovely single-byte
+    # chars that Python2 had.
+    while(True):
+        thing=json.dumps(tx_queue.get())
+        with tx_lock:
+            if(sys.version_info>(3,0)):
+                s.sendall(bytes(thing+"\r\n",'utf-8'))
+            else:
+                s.sendall(thing+"\r\n")
+        time.sleep(0.25)
+
+# Due to the way JS8Call sends data to an API client (ie, it just
+# sends random JSON data whenever it pleases), we'll receive all
+# messages in a thread so it'll all work in the background.
+def rx_thread(name):
+    global spots
+    global dial
+    global freq
+    global offset
+    global grid
+    global info
+    global ptt
+    global speed
+    n=0
+    left=''
+    # Run forever.
+    while(True):
+        try:
+            # Get a chunk of text and, if it ends with a \n, process
+            # it. If it doesn't, stash it and loop, and tack any
+            # leftovers from last go-round on the front of what was
+            # received. In theory, we shouldn't ever exceed the 4096
+            # bytes, and this won't matter, but just in case...
+            raw=(left+s.recv(4096).decode("utf-8")).split('\n')
+            if(raw[-1:][0]==''):
+                raw=raw[0:-1]
+            for stuff in raw:
+                if(stuff[-1:]=="}"):
+                    message=json.loads(stuff)
+                    # If the message contains something we need to
+                    # process (for example, the result of a frequency
+                    # query), do it. If it's just incoming text, queue
+                    # it for the user.
+                    processed=False
+                    if(message['type']=="RIG.FREQ"):
+                        processed=True
+                        dial=message['params']['DIAL']
+                        freq=message['params']['FREQ']
+                        offset=message['params']['OFFSET']
+                    elif(message['type']=="STATION.GRID"):
+                        processed=True
+                        grid=message['value']
+                    elif(message['type']=="STATION.INFO"):
+                        processed=True
+                        info=message['value']
+                    elif(message['type']=="RIG.PTT"):
+                        processed=True
+                        if(message['value'])=="on":
+                           ptt=True
+                        else:
+                           ptt=False
+                    elif(message['type']=="TX.FRAME"):
+                        processed=True
+                    elif(message['type']=="RX.SPOT"):
+                        # Note that we don't mark this as 'processed'
+                        # (even though it is), as the user may want to
+                        # watch for incoming spots to take his own
+                        # action.
+                        message['time']=time.time()
+                        with spots_lock:
+                           if(message['params']['CALL'] not in spots):
+                               spots[message['params']['CALL']]=[]
+                           spots[message['params']['CALL']].append(message)
+                    
+
+
+
+                    # xxx
+                    # RX.DIRECTED, RX.ACTIVITY, RX.SPOT
+                    if(not(processed)):
+                        with rx_lock:
+                           rx_queue.put(message)
+                else:
+                    left=left+stuff
+        except socket.timeout:
+            # Ignore for now. Do something smarter later. TODO: Be smarter here.
+            n=n+1
+
+def start_net(host,port):
+    global s
+
+    # Open a socket to JS8Call.
+    s=socket.socket()
+    s.connect((host,port))
+    s.settimeout(1)
+
+    # Start the RX thread. We make this a daemon thread so that it
+    # will automatically die when the main thread dies. Kind of dirty,
+    # but there's no risk of data loss, and the OS will automatically
+    # take care of the socket clean-up when the process exits. There's
+    # two flavors here, to handle Python2 and Python3.
+    if(sys.version_info>(3,0)):
+        thread1=Thread(target=rx_thread,args=("RX Thread",),daemon=True)
+    else:
+        thread1=Thread(target=rx_thread,args=("RX Thread",))
+        thread1.daemon=True
+    thread1.start()
+    # Start the TX thread. Also a daemon thread.
+    if(sys.version_info>(3,0)):
+        thread2=Thread(target=tx_thread,args=("TX Thread",),daemon=True)
+    else:
+        thread2=Thread(target=tx_thread,args=("TX Thread",))
+        thread2.daemon=True
+    thread2.start()
+
+def get_freq():
+    # Ask JS8Call to get the radio's dial frequency.
+    global dial
+    global freq
+    global offset
+    dial=False
+    freq=False
+    offset=False
+    queue_message({"params":{},"type":"RIG.GET_FREQ","value":""})
+    while(not(dial) or not(freq) or not(offset)):
+        time.sleep(0.1)
+    return({"dial":dial,"freq":freq,"offset":offset})
+
+def get_callsign():
+    # Ask JS8Call for the configured callsign.
+    global call
+    call=False
+    queue_message({"params":{},"type":"STATION.GET_CALLSIGN","value":""})
+    while(not(call)):
+        time.sleep(0.1)
+    return(call)
+
+def get_grid():
+    # Ask JS8Call for the configured grid square.
+    global grid
+    grid=False
+    queue_message({'params':{},'type':'STATION.GET_GRID','value':''})
+    while(not(grid)):
+        time.sleep(0.1)
+    return(grid)
+
+def get_info():
+    # Ask JS8Call for the configured info field.
+    global info
+    info=False
+    queue_message({"params":{},"type":"STATION.GET_INFO","value":""})
+    while(not(info)):
+        time.sleep(0.1)
+    return(info)
+
+def get_call_activity():
+    # Get the contents of the right white box.
+    queue_message({"params":{},"type":"RX.GET_CALL_ACTIVITY","value":""})
+
+def get_call_selected():
+    queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
+
+def get_band_activity():
+    # Get the contents of the left white box.
+    queue_message({"params":{},"type":"RX.GET_BAND_ACTIVITY","value":""})
+
+def get_rx_text():
+    # Get the contents of the yellow window.
+    queue_message({"params":{},"type":"RX.GET_TEXT","value":""})
+    
+def get_tx_text():
+    # Get the contents of the box below yellow window.
+    queue_message({"params":{},"type":"TX.GET_TEXT","value":""})
+
+def get_speed():
+    # Ask JS8Call what speed it's currently configured for.
+    # slow==4, normal==0, fast==1, turbo==2
+    global speed
+    speed=False
+    queue_message({"params":{},"type":"MODE.GET_SPEED","value":""})
+    while(not(speed)):
+        time.sleep(0.1)
+    return(speed)
+    
+def raise_window():
+    # Raise the JS8Call window to the top.
+    queue_message({"params":{},"type":"WINDOW.RAISE","value":""})
+
+if __name__ == '__main__':
+    print("This is a library and is not intended for stand-alone execution.")

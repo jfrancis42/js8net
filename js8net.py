@@ -55,16 +55,11 @@ def tx_thread(name):
     global tx_queue
     global tx_lock
     # Run forever. Delay 0.25 seconds between each send, because
-    # sending too quickly jacks up comms with JS8. There's a python
-    # version check here, because Python3 broke the lovely single-byte
-    # chars that Python2 had.
+    # sending too quickly jacks up comms with JS8.
     while(True):
         thing=json.dumps(tx_queue.get())
         with tx_lock:
-            if(sys.version_info>(3,0)):
-                s.sendall(bytes(thing+"\r\n",'utf-8'))
-            else:
-                s.sendall(thing+"\r\n")
+            s.sendall(bytes(thing+"\r\n",'utf-8'))
         time.sleep(0.25)
 
 # Due to the way JS8Call sends data to an API client (ie, it just
@@ -89,9 +84,9 @@ def rx_thread(name):
             # Get a chunk of text and, if it ends with a \n, process
             # it. If it doesn't, stash it and loop, and tack any
             # leftovers from last go-round on the front of what was
-            # received. In theory, we shouldn't ever exceed the 65535
+            # received. In theory, we shouldn't ever exceed the 4096
             # bytes, and this won't matter, but just in case...
-            raw=(left+s.recv(65535).decode("utf-8")).split('\n')
+            raw=(left+s.recv(4096).decode("utf-8")).split('\n')
             if(raw[-1:][0]==''):
                 raw=raw[0:-1]
             for stuff in raw:
@@ -181,20 +176,11 @@ def start_net(host,port):
     # Start the RX thread. We make this a daemon thread so that it
     # will automatically die when the main thread dies. Kind of dirty,
     # but there's no risk of data loss, and the OS will automatically
-    # take care of the socket clean-up when the process exits. There's
-    # two flavors here, to handle Python2 and Python3.
-    if(sys.version_info>(3,0)):
-        thread1=Thread(target=rx_thread,args=("RX Thread",),daemon=True)
-    else:
-        thread1=Thread(target=rx_thread,args=("RX Thread",))
-        thread1.daemon=True
+    # take care of the socket clean-up when the process exits.
+    thread1=Thread(target=rx_thread,args=("RX Thread",),daemon=True)
     thread1.start()
     # Start the TX thread. Also a daemon thread.
-    if(sys.version_info>(3,0)):
-        thread2=Thread(target=tx_thread,args=("TX Thread",),daemon=True)
-    else:
-        thread2=Thread(target=tx_thread,args=("TX Thread",))
-        thread2.daemon=True
+    thread2=Thread(target=tx_thread,args=("TX Thread",),daemon=True)
     thread2.start()
 
 def get_freq():

@@ -17,8 +17,6 @@ if __name__ == '__main__':
 #    print(get_tx_text())
 #    print(get_rx_text())
     print(set_freq(7078000,2000))
-
-
     
     while(True):
         if(not(rx_queue.empty())):

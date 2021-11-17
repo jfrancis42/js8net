@@ -149,7 +149,6 @@ def rx_thread(name):
                         # (even though it is), as the user may want to
                         # watch for incoming spots to take his own
                         # action.
-                        message['time']=time.time()
                         with spots_lock:
                            if(message['params']['CALL'] not in spots):
                                spots[message['params']['CALL']]=[]

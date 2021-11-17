@@ -102,6 +102,7 @@ def rx_thread(name):
                 string=string.rstrip("\n")
                 for m in string.split("\n"):
                     message=json.loads(m)
+                    message['time']=time.time()
                     # If the message contains something we need to
                     # process (for example, the result of a frequency
                     # query), do it. If it's just incoming text, queue
@@ -164,9 +165,11 @@ def rx_thread(name):
                     if(not(processed)):
                         with rx_lock:
                            rx_queue.put(message)
+            time.sleep(0.1)
         except socket.timeout:
         # Ignore for now. TODO: Be smarter here.
             n=n+1
+            time.sleep(0.1)
 
 def start_net(host,port):
     global s

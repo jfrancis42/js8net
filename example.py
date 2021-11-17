@@ -22,3 +22,4 @@ if __name__ == '__main__':
     while(True):
         if(not(rx_queue.empty())):
             print(rx_queue.get())
+            time.sleep(0.1)

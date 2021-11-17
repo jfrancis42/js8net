@@ -77,22 +77,31 @@ def rx_thread(name):
     global ptt
     global text
     n=0
-    left=''
+    left=False
+    empty=True
     # Run forever.
     while(True):
         try:
-            # Get a chunk of text and, if it ends with a \n, process
-            # it. If it doesn't, stash it and loop, and tack any
-            # leftovers from last go-round on the front of what was
-            # received. In theory, we shouldn't ever exceed the 4096
-            # bytes, and this won't matter, but just in case...
-            raw=(left+s.recv(4096).decode("utf-8")).split('\n')
-            if(raw[-1:][0]==''):
-                raw=raw[0:-1]
-            for stuff in raw:
-                if(stuff[-1:]=="}"):
-#                    print(stuff)
-                    message=json.loads(stuff)
+            # Get a chunk of text and process it. Each valid chunk of
+            # data ends in a \n. This is epically painful due to py3's
+            # multi-byte characters.
+            string=""
+            stuff=s.recv(65535)
+            if(not(empty)):
+                stuff=left+stuff
+            if(stuff[0:1]==b'{' and stuff[-2:-1]==b'}'):
+                string=stuff.decode("utf-8")
+                empty=True
+            else:
+              if(empty):
+                  empty=False
+                  left=stuff
+            if(string==""):
+                message={"type":"empty"}
+            else:
+                string=string.rstrip("\n")
+                for m in string.split("\n"):
+                    message=json.loads(m)
                     # If the message contains something we need to
                     # process (for example, the result of a frequency
                     # query), do it. If it's just incoming text, queue
@@ -145,11 +154,7 @@ def rx_thread(name):
                                spots[message['params']['CALL']]=[]
                            spots[message['params']['CALL']].append(message)
                     
-
-
-
                     # xxx
-
                     # The following message types are delivered to the
                     # rx_queue for user processing (though some of
                     # them are also internally processed):
@@ -159,10 +164,8 @@ def rx_thread(name):
                     if(not(processed)):
                         with rx_lock:
                            rx_queue.put(message)
-                else:
-                    left=left+stuff
         except socket.timeout:
-            # Ignore for now. TODO: Be smarter here.
+        # Ignore for now. TODO: Be smarter here.
             n=n+1
 
 def start_net(host,port):
@@ -243,13 +246,9 @@ def get_call_activity():
 def get_call_selected():
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
 
-#def get_band_activity():
+def get_band_activity():
     # Get the contents of the left white box.
-    # Something is broken. It's not clear whether JS8Call is returning
-    # bad JSON, or whether my network code is not processing it
-    # correctly, but either way, this blows up, so this call has been
-    # commented out until I figure it out.
-    #queue_message({"params":{},"type":"RX.GET_BAND_ACTIVITY","value":""})
+    queue_message({"params":{},"type":"RX.GET_BAND_ACTIVITY","value":""})
 
 def get_rx_text():
     # Get the contents of the yellow window.

@@ -191,7 +191,10 @@ def start_net(host,port):
     thread2.start()
 
 def get_freq():
-    # Ask JS8Call to get the radio's dial frequency.
+    # Ask JS8Call to get the radio's frequency. Returns the dial
+    # frequency (in hz), the offset in the audio passband (in hz), and
+    # the actual effective transmit frequency (basically the two
+    # values added together) as a JSON blob.
     global dial
     global freq
     global offset
@@ -204,6 +207,8 @@ def get_freq():
     return({"dial":dial,"freq":freq,"offset":offset})
 
 def set_freq(dial,offset):
+    # Set the radio's dial freq (in hz) and the offset within the
+    # passband (also in hz).
     queue_message({"params":{"DIAL":dial,"OFFSET":offset},"type":"RIG.SET_FREQ","value":""})
     time.sleep(0.1)
     return(get_freq())
@@ -227,18 +232,23 @@ def get_grid():
     return(grid)
 
 def set_grid(grid):
+    # Set the grid square.
     queue_message({"params":{},"type":"STATION.SET_GRID","value":grid})
     return(get_grid())
 
 def send_aprs_grid(grid):
+    # Send the supplied grid info to APRS (use
+    # send_aprs_grid(get_grid()) to send your configured grid square).
     send_message("@APRSIS GRID "+grid)
 
 def send_sms(phone,message):
+    # Send an SMS message via JS8.
     with unique_lock:
         unique=unique+1
         send_message("#APRSIS CMD :SMSGTE  :@"+phone+" "+message+"{%03d}" % unique)
 
 def send_email(address,message):
+    # Send an email message via JS8.
     with unique_lock:
         unique=unique+1
         send_message("#APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
@@ -253,6 +263,7 @@ def get_info():
     return(info)
 
 def set_info(info):
+    # Set the info field.
     queue_message({"params":{},"type":"STATION.SET_INFO","value":info})
     return(get_info())
 
@@ -261,6 +272,7 @@ def get_call_activity():
     queue_message({"params":{},"type":"RX.GET_CALL_ACTIVITY","value":""})
 
 def get_call_selected():
+    # Never quite figured out what this does...
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
 
 def get_band_activity():
@@ -295,6 +307,12 @@ def get_speed():
         time.sleep(0.1)
     return(speed)
     
+def set_speed(speed):
+    # Set the JS8Call transmission speed.
+    # slow==4, normal==0, fast==1, turbo==2
+    queue_message({"params":{"SPEED":speed},"type":"MODE.SET_SPEED","value":""})
+    return(get_speed())
+
 def raise_window():
     # Raise the JS8Call window to the top.
     queue_message({"params":{},"type":"WINDOW.RAISE","value":""})

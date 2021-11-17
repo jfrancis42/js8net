@@ -19,6 +19,8 @@ global tx_lock
 global rx_queue
 global rx_lock
 global spots_lock
+global unique
+global unique_lock
 global s
 
 s=False
@@ -41,6 +43,7 @@ global ptt
 global text
 
 spots={}
+unique=0
 
 # Add a message to the outgoing message queue.
 def queue_message(message):
@@ -153,14 +156,13 @@ def rx_thread(name):
                            if(message['params']['CALL'] not in spots):
                                spots[message['params']['CALL']]=[]
                            spots[message['params']['CALL']].append(message)
-                    
-                    # xxx
                     # The following message types are delivered to the
                     # rx_queue for user processing (though some of
                     # them are also internally processed):
                     # RX.DIRECTED, RX.ACTIVITY, RX.SPOT,
-                    # RX.CALL_ACTIVITY, RX.GET_BAND_ACTIVITY (broken),
-                    # RX.TEXT
+                    # RX.CALL_ACTIVITY, RX.GET_BAND_ACTIVITY,
+                    # RX.TEXT. If any other messages show up in the
+                    # queue, it's a bug.
                     if(not(processed)):
                         with rx_lock:
                            rx_queue.put(message)
@@ -227,6 +229,19 @@ def get_grid():
 def set_grid(grid):
     queue_message({"params":{},"type":"STATION.SET_GRID","value":grid})
     return(get_grid())
+
+def send_aprs_grid(grid):
+    send_message("@APRSIS GRID "+grid)
+
+def send_sms(phone,message):
+    with unique_lock:
+        unique=unique+1
+        send_message("#APRSIS CMD :SMSGTE  :@"+phone+" "+message+"{%03d}" % unique)
+
+def send_email(address,message):
+    with unique_lock:
+        unique=unique+1
+        send_message("#APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
 
 def get_info():
     # Ask JS8Call for the configured info field.

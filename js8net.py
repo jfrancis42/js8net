@@ -41,6 +41,7 @@ global call
 global speed
 global ptt
 global text
+global last_rx
 
 spots={}
 unique=0
@@ -105,7 +106,9 @@ def rx_thread(name):
                 string=string.rstrip("\n")
                 for m in string.split("\n"):
                     message=json.loads(m)
-                    message['time']=time.time()
+                    now=time.time()
+                    message['time']=now
+                    last_rx=now
                     # If the message contains something we need to
                     # process (for example, the result of a frequency
                     # query), do it. If it's just incoming text, queue
@@ -172,6 +175,15 @@ def rx_thread(name):
             n=n+1
             time.sleep(0.1)
 
+# This thread makes sure the connection is alive by sending a
+# heartbeat request (specifically, a request for callsign) every five
+# minutes.
+def hb_thread(name):
+    # Run forever. Sleep five minutes between runs.
+    while(True):
+        get_callsign()
+        time.sleep(300)
+
 def start_net(host,port):
     global s
 
@@ -189,6 +201,9 @@ def start_net(host,port):
     # Start the TX thread. Also a daemon thread.
     thread2=Thread(target=tx_thread,args=("TX Thread",),daemon=True)
     thread2.start()
+    # Start the heartbeat thread. Also a daemon thread.
+    thread3=Thread(target=hb_thread,args=("HB Thread",),daemon=True)
+    thread3.start()
 
 def get_freq():
     # Ask JS8Call to get the radio's frequency. Returns the dial
@@ -321,5 +336,16 @@ def send_message(message):
     # Send 'message' in the next transmit cycle.
     queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":message})
 
+def alive():
+    # Return true if the TCP connection appears to still be alive (ie,
+    # a valid response was received in the last five minutes + small
+    # wiggle room). Else return false. It's up to you to re-establish
+    # comms if the connection has failed.
+    global last_rx
+    if(time.time()-last_rx<=305):
+        return(true)
+    else:
+        return(false)
+    
 if __name__ == '__main__':
     print("This is a library and is not intended for stand-alone execution.")

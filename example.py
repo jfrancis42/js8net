@@ -8,7 +8,7 @@ from js8net import *
 
 # Main program.
 if __name__ == '__main__':
-    parser=argparse.ArgumentParser(description="Send grid square to APRS.")
+    parser=argparse.ArgumentParser(description="Example of using js8net.py")
     parser.add_argument("--js8_host",default="localhost",help="IP/DNS of JS8Call server (default localhost)")
     parser.add_argument("--js8_port",default=2442,help="TCP port of JS8Call server (default 2442)")
     args=parser.parse_args()

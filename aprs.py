@@ -86,12 +86,15 @@ if __name__ == "__main__":
     parser=argparse.ArgumentParser(description="Send grid square to APRS.")
     parser.add_argument("--js8_host",default="localhost",help="IP/DNS of JS8Call server (default localhost)")
     parser.add_argument("--js8_port",default=2442,help="TCP port of JS8Call server (default 2442)")
+    parser.add_argument("--gpsd_host",default=False,help="IP/DNS of GPSD host")
+    parser.add_argument("--gpsd_port",default=2947,help="TCP port of GPSD host (default 2947)")
     parser.add_argument("--setgrid",default=False,action="store_true",help="Set the JS8Call grid square")
     parser.add_argument("--getgrid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
     parser.add_argument("--grid_digits",default=6,help="How many grid square digits to store in JS8Call (default 6)")
     parser.add_argument("--lat",default=False,help="Specify latitude")
     parser.add_argument("--lon",default=False,help="Specify longitude")
     parser.add_argument("--grid",default=False,help="Specify grid square")
+    parser.add_argument("--fake_send",default=False,action="store_true",help="Don't actually send")
     args=parser.parse_args()
 
     start_net(args.js8_host,args.js8_port)
@@ -100,14 +103,22 @@ if __name__ == "__main__":
     if(args.getgrid):
         grid=get_grid()
     if(args.lat and args.lon):
-        grid=ll2mh(args.lat,args.lon,args.grid_digits)
+        grid=ll2mh(args.lat,args.lon,int(args.grid_digits))
     if(args.grid):
         grid=args.grid
+    if(args.gpsd_host):
+        import gpsd
+        gpsd.connect(host=args.gpsd_host,port=args.gpsd_port)
+        packet=gpsd.get_current()
+        grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
     if(grid):
         if(args.setgrid):
             set_grid(grid)
-        send_aprs_grid(grid)
+        if(not(args.fake_send)):
+            send_aprs_grid(grid)
         print("Sent grid: ",grid)
         print("lat/lon: ",mh2ll(grid))
+        if(not(args.fake_send)):
+            time.sleep(3)
     else:
         print("No grid specified, no data sent.")

@@ -6,6 +6,10 @@ import time
 import argparse
 from js8net import *
 
+#
+# pip3 install gpsd-py3
+#
+
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 #
 # The following functions were taken (and cleaned up and modified for
@@ -88,22 +92,35 @@ if __name__ == "__main__":
     parser.add_argument("--js8_port",default=2442,help="TCP port of JS8Call server (default 2442)")
     parser.add_argument("--gpsd_host",default=False,help="IP/DNS of GPSD host")
     parser.add_argument("--gpsd_port",default=2947,help="TCP port of GPSD host (default 2947)")
-    parser.add_argument("--setgrid",default=False,action="store_true",help="Set the JS8Call grid square")
-    parser.add_argument("--getgrid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
+    parser.add_argument("--set_grid",default=False,action="store_true",help="Set the JS8Call grid square")
+    parser.add_argument("--get_grid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
     parser.add_argument("--grid_digits",default=6,help="How many grid square digits to store in JS8Call (default 6)")
     parser.add_argument("--lat",default=False,help="Specify latitude")
     parser.add_argument("--lon",default=False,help="Specify longitude")
     parser.add_argument("--grid",default=False,help="Specify grid square")
+    parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
+    parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
+    parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
     parser.add_argument("--fake_send",default=False,action="store_true",help="Don't actually send")
     args=parser.parse_args()
 
     start_net(args.js8_host,args.js8_port)
     time.sleep(1)
     grid=False
-    if(args.getgrid):
+    if(args.freq or args.freq_dial or args.freq_audio):
+        f=get_freq()
+        if(args.dial_freq and args.freq_audio):
+            set_freq(args.dial_freq,args.freq_audio)
+        elif(args.freq and args.freq_audio):
+            set_freq(args.freq_dial-args.freq_audio,args.freq_audio)
+        elif(args.freq):
+            set_freq(args.freq_dial-1000,1000)
+        elif(args.freq_audio):
+            set_freq(f['dial'],args.freq_audio)
+    if(args.get_grid):
         grid=get_grid()
     if(args.lat and args.lon):
-        grid=ll2mh(args.lat,args.lon,int(args.grid_digits))
+        grid=ll2mh(float(args.lat),float(args.lon),int(args.grid_digits))
     if(args.grid):
         grid=args.grid
     if(args.gpsd_host):
@@ -112,7 +129,7 @@ if __name__ == "__main__":
         packet=gpsd.get_current()
         grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
     if(grid):
-        if(args.setgrid):
+        if(args.set_grid):
             set_grid(grid)
         if(not(args.fake_send)):
             send_aprs_grid(grid)

@@ -256,6 +256,14 @@ def send_aprs_grid(grid):
     # send_aprs_grid(get_grid()) to send your configured grid square).
     send_message("@APRSIS GRID "+grid)
 
+def send_heartbeat(grid=False):
+    # Send a heartbeat message.
+    if(not(grid)):
+        grid=get_grid()
+    if(length(grid)>=4):
+        grid=grid[0:4]
+        send_message(get_callsign()+": @HB HEARTBEAT "+grid)
+
 def send_sms(phone,message):
     # Send an SMS message via JS8.
     with unique_lock:

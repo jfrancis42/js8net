@@ -260,7 +260,7 @@ def send_heartbeat(grid=False):
     # Send a heartbeat message.
     if(not(grid)):
         grid=get_grid()
-    if(length(grid)>=4):
+    if(len(grid)>=4):
         grid=grid[0:4]
         send_message(get_callsign()+": @HB HEARTBEAT "+grid)
 

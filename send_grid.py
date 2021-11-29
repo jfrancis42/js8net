@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import os
 import sys
 import time
 import argparse
@@ -88,10 +89,10 @@ def mh2ll(mh):
 # Main program.
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description="Send grid square to APRS.")
-    parser.add_argument("--js8_host",default="localhost",help="IP/DNS of JS8Call server (default localhost)")
-    parser.add_argument("--js8_port",default=2442,help="TCP port of JS8Call server (default 2442)")
-    parser.add_argument("--gpsd_host",default=False,help="IP/DNS of GPSD host")
-    parser.add_argument("--gpsd_port",default=2947,help="TCP port of GPSD host (default 2947)")
+    parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
+    parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
+    parser.add_argument("--gpsd_host",default=False,help="IP/DNS of GPSD host (default localhost, env: GPSDHOST)")
+    parser.add_argument("--gpsd_port",default=False,help="TCP port of GPSD host (default 2947, env: GPSDPORT)")
     parser.add_argument("--set_grid",default=False,action="store_true",help="Set the JS8Call grid square")
     parser.add_argument("--get_grid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
     parser.add_argument("--grid_digits",default=6,help="How many grid square digits to store in JS8Call (default 6)")
@@ -102,9 +103,48 @@ if __name__ == "__main__":
     parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
     parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
     parser.add_argument("--fake_send",default=False,action="store_true",help="Don't actually send")
+    parser.add_argument("--env",default=False,action="store_true",help="Use environment variables (cli options override)")
     args=parser.parse_args()
 
-    start_net(args.js8_host,args.js8_port)
+    js8host=False
+    js8port=False
+
+    # If the user specified a command-line flag, that takes
+    # priority. If they also specified --env, any parameters they did
+    # not specify explicit flags for, try to grab from the
+    # environment.
+    if(args.js8_host):
+        js8host=args.js8_host
+    elif(os.environ.get("JS8HOST") and args.env):
+        js8host=os.environ.get("JS8HOST")
+    else:
+        js8host="localhost"
+
+    if(args.js8_port):
+        js8port=args.js8_port
+    elif(os.environ.get("JS8PORT") and args.env):
+        js8port=int(os.environ.get("JS8PORT"))
+    else:
+        js8port=2442
+
+    gpsdhost=False
+    gpsdport=False
+
+    if(args.gpsd_host):
+        gpsdhost=args.gpsd_host
+    elif(os.environ.get("GPSDHOST") and args.env):
+        gpsdhost=os.environ.get("GPSDHOST")
+    else:
+        gpsdhost="localhost"
+
+    if(args.gpsd_port):
+        gpsdport=args.gpsd_port
+    elif(os.environ.get("GPSDPORT") and args.env):
+        gpsdport=int(os.environ.get("GPSDPORT"))
+    else:
+        gpsdport=2947
+
+    start_net(js8host,js8port)
     time.sleep(1)
     grid=False
     if(args.freq or args.freq_dial or args.freq_audio):
@@ -123,9 +163,9 @@ if __name__ == "__main__":
         grid=ll2mh(float(args.lat),float(args.lon),int(args.grid_digits))
     if(args.grid):
         grid=args.grid
-    if(args.gpsd_host):
+    if(args.gpsd_host or (args.env and (os.environ.get("GPSDHOST") or os.environ.get("GPSDPORT")))):
         import gpsd
-        gpsd.connect(host=args.gpsd_host,port=args.gpsd_port)
+        gpsd.connect(host=gpsdhost,port=gpsdport)
         packet=gpsd.get_current()
         grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
     if(grid):

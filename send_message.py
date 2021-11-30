@@ -9,11 +9,12 @@ from js8net import *
 
 # Main program.
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser(description="Send email message via JS8Call.")
+    parser=argparse.ArgumentParser(description="Send a directed message via JS8Call.")
     parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
     parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
-    parser.add_argument("--addr",default=False,help="Specify recipient email address")
+    parser.add_argument("--call",default=False,help="Specify recipient call sign")
     parser.add_argument("--msg",default=False,help="Message to send")
+    parser.add_argument("--ack",default=False,help="How long to Wait for ACK (seconds, includes TX time, 180 is reasonable here, for moderate messages)")
     parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
     parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
     parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     else:
         js8port=2442
 
-    if(not(args.msg and args.addr)):
+    if(not(args.msg and args.call)):
         print("--msg and --addr are mandatory")
     else:
         if(args.verbose):
@@ -68,7 +69,28 @@ if __name__ == "__main__":
                 if(args.verbose):
                     print("Setting speed to ",str(args.speed))
                 set_speed(args.speed)
-        send_email(args.addr,args.msg)
+        send_inbox_message(args.call,args.msg)
         time.sleep(3)
         if(args.verbose):
             print("Message sent.")
+        if(args.ack):
+            if(args.verbose):
+                print("Awaiting ACK...")
+            now=time.time()
+            done=now+int(args.ack)
+            mycall=get_callsign()
+            while(done>time.time()):
+                time.sleep(1)
+                if(not(rx_queue.empty())):
+                    with rx_lock:
+                        rx=rx_queue.get()
+                        if(rx['type']=="RX.DIRECTED"):
+                            if(rx['params']['CMD']==" ACK" and
+                               rx['params']['FROM']==args.call and
+                               rx['params']['TO']==mycall):
+                                if(args.verbose):
+                                    print("Successfully received ACK.")
+                                sys.exit(0)
+            if(args.verbose):
+                print("Failed to receive ACK.")
+            sys.exit(1)

@@ -204,6 +204,7 @@ def start_net(host,port):
     # Start the heartbeat thread. Also a daemon thread.
     thread3=Thread(target=hb_thread,args=("HB Thread",),daemon=True)
     thread3.start()
+    time.sleep(1)
 
 def get_freq():
     # Ask JS8Call to get the radio's frequency. Returns the dial
@@ -343,6 +344,16 @@ def raise_window():
 def send_message(message):
     # Send 'message' in the next transmit cycle.
     queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":message})
+
+def send_directed_message(dest_call,message):
+    # Send directed 'message' (to a specific call sign) in the next
+    # transmit cycle.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" "+message})
+
+def send_inbox_message(dest_call,message):
+    # Send directed 'message' (to a specific call sign) in the next
+    # transmit cycle.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" MSG "+message})
 
 def alive():
     # Return true if the TCP connection appears to still be alive (ie,

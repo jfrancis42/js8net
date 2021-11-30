@@ -102,8 +102,10 @@ if __name__ == "__main__":
     parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
     parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
     parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
+    parser.add_argument("--speed",default=False,help="Specify transmit speed (slow==4, normal==0, fast==1, turbo==2)")
     parser.add_argument("--fake_send",default=False,action="store_true",help="Don't actually send")
     parser.add_argument("--env",default=False,action="store_true",help="Use environment variables (cli options override)")
+    parser.add_argument("--verbose",default=False,action="store_true",help="Lots of status messages")
     args=parser.parse_args()
 
     js8host=False
@@ -144,8 +146,11 @@ if __name__ == "__main__":
     else:
         gpsdport=2947
 
+    if(args.verbose):
+        print("Connecting to JS8Call...")
     start_net(js8host,js8port)
-    time.sleep(1)
+    if(args.verbose):
+        print("Connected.")
     grid=False
     if(args.freq or args.freq_dial or args.freq_audio):
         f=get_freq()
@@ -157,6 +162,13 @@ if __name__ == "__main__":
             set_freq(args.freq_dial-1000,1000)
         elif(args.freq_audio):
             set_freq(f['dial'],args.freq_audio)
+    if(args.verbose):
+        print("Frequency set to ",get_freq())
+    if(args.speed):
+        if(args.speed>=0 and args.speed<=4 and args.speed!=3):
+            if(args.verbose):
+                print("Setting speed to ",str(args.speed))
+            set_speed(args.speed)
     if(args.get_grid):
         grid=get_grid()
     if(args.lat and args.lon):
@@ -165,16 +177,24 @@ if __name__ == "__main__":
         grid=args.grid
     if(args.gpsd_host or (args.env and (os.environ.get("GPSDHOST") or os.environ.get("GPSDPORT")))):
         import gpsd
+        if(args.verbose):
+            print("Connecting to GPSD...")
         gpsd.connect(host=gpsdhost,port=gpsdport)
+        if(args.verbose):
+            print("Connected.")
+            print("Getting lat/lon...")
         packet=gpsd.get_current()
+        if(args.verbose):
+            print("Complete.")
         grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
     if(grid):
         if(args.set_grid):
             set_grid(grid)
         if(not(args.fake_send)):
             send_aprs_grid(grid)
-        print("Sent grid: ",grid)
-        print("lat/lon: ",mh2ll(grid))
+        if(args.verbose):
+            print("Sent grid: ",grid)
+            print("lat/lon: ",mh2ll(grid))
         if(not(args.fake_send)):
             time.sleep(3)
     else:

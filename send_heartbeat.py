@@ -16,7 +16,9 @@ if __name__ == "__main__":
     parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
     parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
     parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
+    parser.add_argument("--speed",default=False,help="Specify transmit speed (slow==4, normal==0, fast==1, turbo==2)")
     parser.add_argument("--env",default=False,action="store_true",help="Use environment variables (cli options override)")
+    parser.add_argument("--verbose",default=False,action="store_true",help="Lots of status messages")
     args=parser.parse_args()
 
     js8host=False
@@ -40,8 +42,11 @@ if __name__ == "__main__":
     else:
         js8port=2442
 
+    if(args.verbose):
+        print("Connecting to JS8Call...")
     start_net(js8host,js8port)
-    time.sleep(1)
+    if(args.verbose):
+        print("Connected.")
     if(args.freq or args.freq_dial or args.freq_audio):
         f=get_freq()
         if(args.dial_freq and args.freq_audio):
@@ -52,6 +57,13 @@ if __name__ == "__main__":
             set_freq(args.freq_dial-1000,1000)
         elif(args.freq_audio):
             set_freq(f['dial'],args.freq_audio)
+    if(args.verbose):
+        print("Frequency set to ",get_freq())
+    if(args.speed):
+        if(args.speed>=0 and args.speed<=4 and args.speed!=3):
+            if(args.verbose):
+                print("Setting speed to ",str(args.speed))
+            set_speed(args.speed)
     grid=False
     if(args.grid):
         grid=args.grid
@@ -59,4 +71,5 @@ if __name__ == "__main__":
         grid=get_grid()
     send_heartbeat(grid)
     time.sleep(3)
-    print("Message sent.")
+    if(args.verbose):
+        print("Message sent.")

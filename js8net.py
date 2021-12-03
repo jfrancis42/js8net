@@ -357,11 +357,11 @@ def send_inbox_message(dest_call,message):
 
 def alive():
     # Return true if the TCP connection appears to still be alive (ie,
-    # a valid response was received in the last five minutes + small
-    # wiggle room). Else return false. It's up to you to re-establish
-    # comms if the connection has failed.
+    # a valid response was received in the last five minutes + wiggle
+    # room). Else return false. It's up to you to re-establish comms
+    # if the connection has failed.
     global last_rx
-    if(time.time()-last_rx<=305):
+    if(time.time()-last_rx<=335):
         return(true)
     else:
         return(false)

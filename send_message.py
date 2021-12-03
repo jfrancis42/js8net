@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--call",default=False,help="Specify recipient call sign")
     parser.add_argument("--msg",default=False,help="Message to send")
     parser.add_argument("--ack",default=False,help="How long to Wait for ACK (seconds, includes TX time, 180 is reasonable here, for moderate messages)")
+    parser.add_argument("--snr",default=False,action="store_true",help="Try SNR? first")
     parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
     parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
     parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
@@ -69,15 +70,23 @@ if __name__ == "__main__":
                 if(args.verbose):
                     print("Setting speed to ",str(args.speed))
                 set_speed(args.speed)
-        send_inbox_message(args.call,args.msg)
-        time.sleep(3)
-        if(args.verbose):
-            print("Message sent.")
-        if(args.ack):
+        snr=False
+        if(not(args.snr)):
+            snr=True
+        else:
             if(args.verbose):
-                print("Awaiting ACK...")
+                print("Asking "+args.call+" for SNR...")
+            send_message(args.call+" SNR?")
             now=time.time()
-            done=now+int(args.ack)
+            speed=get_speed()
+            if(speed==0):
+                done=now+int(15*2.5)
+            elif(speed==1):
+                done=now+int(10*2.5)
+            elif(speed==2):
+                done=now+int(6*2.5)
+            elif(speed==4):
+                done=now+int(30*2.5)
             mycall=get_callsign()
             while(done>time.time()):
                 time.sleep(1)
@@ -85,12 +94,41 @@ if __name__ == "__main__":
                     with rx_lock:
                         rx=rx_queue.get()
                         if(rx['type']=="RX.DIRECTED"):
-                            if(rx['params']['CMD']==" ACK" and
+                            if(rx['params']['CMD']==" SNR" and
                                rx['params']['FROM']==args.call and
                                rx['params']['TO']==mycall):
+                                snr=True
+                                done=time.time()
                                 if(args.verbose):
-                                    print("Successfully received ACK.")
-                                sys.exit(0)
+                                    print("Successfully received SNR: ",str(rx['params']['EXTRA']))
+
+        if(not(snr)):
             if(args.verbose):
                 print("Failed to receive ACK.")
-            sys.exit(1)
+            sys.exit(2)
+        else:
+            send_inbox_message(args.call,args.msg)
+            time.sleep(3)
+            if(args.verbose):
+                print("Message sent.")
+            if(args.ack):
+                if(args.verbose):
+                    print("Awaiting ACK...")
+                now=time.time()
+                done=now+int(args.ack)
+                mycall=get_callsign()
+                while(done>time.time()):
+                    time.sleep(1)
+                    if(not(rx_queue.empty())):
+                        with rx_lock:
+                            rx=rx_queue.get()
+                            if(rx['type']=="RX.DIRECTED"):
+                                if(rx['params']['CMD']==" ACK" and
+                                   rx['params']['FROM']==args.call and
+                                   rx['params']['TO']==mycall):
+                                    if(args.verbose):
+                                        print("Successfully received ACK.")
+                                    sys.exit(0)
+                if(args.verbose):
+                    print("Failed to receive ACK.")
+                sys.exit(1)

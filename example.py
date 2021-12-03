@@ -50,6 +50,7 @@ if __name__ == '__main__':
     print("Freq: ",set_freq(7078000,2000))
     get_band_activity()
     
+    last=time.time()
     while(True):
         time.sleep(0.1)
         if(not(rx_queue.empty())):
@@ -58,6 +59,12 @@ if __name__ == '__main__':
                 f=open("rx.json","a")
                 f.write(json.dumps(rx))
                 f.write("\n")
+                f.close()
+                if(time.time()>=last+300):
+                    last=time.time()
+                    f=open("spots.json","w")
+                    f.write(json.dumps(spots))
+                    f.write("\n")
                 f.close()
                 if(rx['type']=="RX.DIRECTED"):
                     print("FROM:   ",rx['params']['FROM'])

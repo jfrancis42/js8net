@@ -78,6 +78,11 @@ if __name__ == "__main__":
                 print("Asking "+args.call+" for SNR...")
             send_message(args.call+" SNR?")
             now=time.time()
+            # ToDo: This should be calculated based on *HIS* speed,
+            # not *MY* speed. In theory, we have that from the SNR?
+            # reply. Just need to save it for use here. This, of
+            # course, assumes he doesn't change speed mid-stream
+            # (which is unlikely, but not impossible).
             speed=get_speed()
             if(speed==0):
                 done=now+int(15*2.5)

@@ -6,6 +6,7 @@ import socket
 import json
 import time
 import threading
+import traceback
 from threading import Thread
 from queue import Queue
 
@@ -42,9 +43,132 @@ global speed
 global ptt
 global text
 global last_rx
+global mycall
 
 spots={}
 unique=0
+
+def calc_band(freq):
+    if(freq>=1800 and freq<=2000):
+        return("160m")
+    elif(freq>=3500 and freq<=4000):
+        return("80m")
+    elif(freq>=5330 and freq<=5410):
+        return("60m")
+    elif(freq>=7000 and freq<=7300):
+        return("40m")
+    elif(freq>=10100 and freq<=10150):
+        return("30m")
+    elif(freq>=14000 and freq<=14350):
+        return("20m")
+    elif(freq>=17068 and freq<=17168):
+        return("17m")
+    elif(freq>=21000 and freq<=21450):
+        return("15m")
+    elif(freq>=24890 and freq<=24990):
+        return("12m")
+    elif(freq>=28000 and freq<=29700):
+        return("10m")
+    elif(freq>=50000 and freq<=54000):
+        return("6m")
+    elif(freq>=144000 and freq<=148000):
+        return("2m")
+    elif(freq>=219000 and freq<=225000):
+        return("1.25m")
+    elif(freq>=420000 and freq<=450000):
+        return("70cm")
+    else:
+        return(False)
+
+# Process an incoming message, and record any useful stats about it
+# (currently, time, band, grid, speed, snr).
+# ToDo: "type": "RX.BAND_ACTIVITY"
+def process_message(msg):
+    global spots
+    global spots_lock
+    global mycall
+    global error
+    if(msg['type']=="RX.SPOT"):
+        with spots_lock:
+            band=calc_band(msg['params']['FREQ'])
+            if(mycall not in spots):
+                spots[mycall]={}
+            if(msg['params']['CALL'] not in spots[mycall]):
+                spots[mycall][msg['params']['CALL']]=[]
+            grid=False
+            if(msg['params']['GRID']!=""):
+                grid=msg['params']['GRID']
+            spots[mycall][msg['params']['CALL']].append({'time':msg['time'],
+                                                         'band':band,
+                                                         'grid':grid,
+                                                         'speed':False,
+                                                         'snr':msg['params']['SNR']})
+    if(msg['type']=="RX.DIRECTED"):
+        with spots_lock:
+            band=calc_band(msg['params']['FREQ'])
+            if(mycall not in spots):
+                spots[mycall]={}
+            if(msg['params']['FROM'] not in spots[mycall]):
+                spots[mycall][msg['params']['FROM']]=[]
+            grid=False
+            if(msg['params']['GRID']!=""):
+                grid=msg['params']['GRID']
+            spots[mycall][msg['params']['FROM']].append({'time':msg['time'],
+                                                         'band':band,
+                                                         'grid':grid,
+                                                         'speed':msg['params']['SPEED'],
+                                                         'snr':msg['params']['SNR']})
+            if(msg['params']['CMD']==" HEARTBEAT SNR" or
+                 msg['params']['CMD']==" SNR"):
+                grid=False
+                if(msg['params']['GRID']!=""):
+                    grid=msg['params']['GRID']
+                if(msg['params']['FROM'] not in spots):
+                    spots[msg['params']['FROM']]={}
+                if(msg['params']['TO'] not in spots[msg['params']['FROM']]):
+                    spots[msg['params']['FROM']][msg['params']['TO']]=[]
+                spots[msg['params']['FROM']][msg['params']['TO']].append({'time':msg['time'],
+                                                                          'band':band,
+                                                                          'grid':grid,
+                                                                          'speed':msg['params']['SPEED'],
+                                                                          'snr':int(msg['params']['EXTRA'])})
+            elif(msg['params']['CMD']==" GRID"):
+                grid=msg['params']['TEXT'].split()
+                band=calc_band(msg['params']['FREQ'])
+                if(len(grid)>=4):
+                    grid=grid[3]
+                    if(not(error in grid)):
+                        if(msg['params']['FROM'] not in spots):
+                            spots[msg['params']['FROM']]={}
+                        if(msg['params']['TO'] not in spots[msg['params']['FROM']]):
+                            spots[msg['params']['FROM']][msg['params']['TO']]=[]
+                        spots[msg['params']['FROM']][msg['params']['TO']].append({'time':msg['time'],
+                                                                                  'band':band,
+                                                                                  'grid':grid,
+                                                                                  'speed':msg['params']['SPEED'],
+                                                                                  'snr':False})
+            elif(msg['params']['CMD']==" HEARING"):
+                grid=False
+                band=calc_band(msg['params']['FREQ'])
+                speed=msg['params']['SPEED']
+                if(msg['params']['GRID']!=""):
+                    grid=msg['params']['GRID']
+                if(spots[msg['params']['FROM']] not in spots):
+                    spots[msg['params']['FROM']]={}
+                if(not(error in msg['params']['TEXT'])):
+                    hearing=msg['params']['TEXT'].split()[3:-1]
+                    for h in hearing:
+                        if(h not in spots[msg['params']['FROM']]):
+                            spots[msg['params']['FROM']][h]=[]
+                        spots[msg['params']['FROM']][h].append({'time':msg['time'],
+                                                                'band':band,
+                                                                'grid':False,
+                                                                'speed':speed,
+                                                                'snr':False})
+#            elif(msg['params']['CMD']==" QUERY CALL"):
+#                n=True
+#            else:
+#                n=True
 
 # Add a message to the outgoing message queue.
 def queue_message(message):
@@ -114,6 +238,11 @@ def rx_thread(name):
                     # query), do it. If it's just incoming text, queue
                     # it for the user.
                     processed=False
+                    try:
+                        process_message(message)
+                    except Exception:
+                        print("Message: ",message)
+                        traceback.print_exc()
                     if(message['type']=="RIG.FREQ"):
                         processed=True
                         dial=message['params']['DIAL']
@@ -155,10 +284,7 @@ def rx_thread(name):
                         # (even though it is), as the user may want to
                         # watch for incoming spots to take his own
                         # action.
-                        with spots_lock:
-                           if(message['params']['CALL'] not in spots):
-                               spots[message['params']['CALL']]=[]
-                           spots[message['params']['CALL']].append(message)
+                        processed=True
                     # The following message types are delivered to the
                     # rx_queue for user processing (though some of
                     # them are also internally processed):
@@ -180,8 +306,9 @@ def rx_thread(name):
 # minutes.
 def hb_thread(name):
     # Run forever. Sleep five minutes between runs.
+    global mycall
     while(True):
-        get_callsign()
+        mycall=get_callsign()
         time.sleep(300)
 
 def start_net(host,port):

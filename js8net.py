@@ -422,7 +422,7 @@ def send_email(address,message):
 def send_pota(park freq mode comment):
     # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300).
     # Your call is sent as configured in JS8Call.
-    send_message("@APRSIS CMD :POTA   :"+get_callsign()+" "+park+" "+str(freq)+" "+mode+" "+comment)
+    send_message("@APRSIS CMD :POTAGW   :"+get_callsign()+" "+park+" "+str(freq)+" "+mode+" "+comment)
 
 def get_info():
     # Ask JS8Call for the configured info field.

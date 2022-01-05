@@ -95,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpsd_port",default=False,help="TCP port of GPSD host (default 2947, env: GPSDPORT)")
     parser.add_argument("--set_grid",default=False,action="store_true",help="Set the JS8Call grid square")
     parser.add_argument("--get_grid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
-    parser.add_argument("--grid_digits",default=6,help="How many grid square digits to store in JS8Call (default 6)")
+    parser.add_argument("--grid_digits",default=10,help="How many grid square digits to store in JS8Call (default 10)")
     parser.add_argument("--lat",default=False,help="Specify latitude")
     parser.add_argument("--lon",default=False,help="Specify longitude")
     parser.add_argument("--grid",default=False,help="Specify grid square")

@@ -49,45 +49,46 @@ spots={}
 unique=0
 
 def calc_band(freq):
-    if(freq>=1800 and freq<=2000):
+    if(freq>=1800000 and freq<=2000000):
         return("160m")
-    elif(freq>=3500 and freq<=4000):
+    elif(freq>=3500000 and freq<=4000000):
         return("80m")
-    elif(freq>=5330 and freq<=5410):
+    elif(freq>=5330000 and freq<=5410000):
         return("60m")
-    elif(freq>=7000 and freq<=7300):
+    elif(freq>=7000000 and freq<=7300000):
         return("40m")
-    elif(freq>=10100 and freq<=10150):
+    elif(freq>=10100000 and freq<=10150000):
         return("30m")
-    elif(freq>=14000 and freq<=14350):
+    elif(freq>=14000000 and freq<=14350000):
         return("20m")
-    elif(freq>=17068 and freq<=17168):
+    elif(freq>=17068000 and freq<=17168000):
         return("17m")
-    elif(freq>=21000 and freq<=21450):
+    elif(freq>=21000000 and freq<=21450000):
         return("15m")
-    elif(freq>=24890 and freq<=24990):
+    elif(freq>=24890000 and freq<=24990000):
         return("12m")
-    elif(freq>=28000 and freq<=29700):
+    elif(freq>=28000000 and freq<=29700000):
         return("10m")
-    elif(freq>=50000 and freq<=54000):
+    elif(freq>=50000000 and freq<=54000000):
         return("6m")
-    elif(freq>=144000 and freq<=148000):
+    elif(freq>=144000000 and freq<=148000000):
         return("2m")
-    elif(freq>=219000 and freq<=225000):
+    elif(freq>=219000000 and freq<=225000000):
         return("1.25m")
-    elif(freq>=420000 and freq<=450000):
+    elif(freq>=420000000 and freq<=450000000):
         return("70cm")
     else:
         return(False)
 
 # Process an incoming message, and record any useful stats about it
 # (currently, time, band, grid, speed, snr).
-# ToDo: "type": "RX.BAND_ACTIVITY"
+# ToDo: Periodically fetch and parse RX.BAND_ACTIVITY
 def process_message(msg):
     global spots
     global spots_lock
     global mycall
     global error
+    # If it's a SPOT message, we get everything but speed.
     if(msg['type']=="RX.SPOT"):
         with spots_lock:
             band=calc_band(msg['params']['FREQ'])
@@ -103,6 +104,8 @@ def process_message(msg):
                                                          'grid':grid,
                                                          'speed':False,
                                                          'snr':msg['params']['SNR']})
+    # If it's a DIRECTED message, we should get everything we hope
+    # for, plus maybe some extras, depending on what CMD.
     if(msg['type']=="RX.DIRECTED"):
         with spots_lock:
             band=calc_band(msg['params']['FREQ'])
@@ -118,6 +121,8 @@ def process_message(msg):
                                                          'grid':grid,
                                                          'speed':msg['params']['SPEED'],
                                                          'snr':msg['params']['SNR']})
+            # If it's an SNR reply, we get to find out how one station
+            # hears another, not just how we hear them.
             if(msg['params']['CMD']==" HEARTBEAT SNR" or
                  msg['params']['CMD']==" SNR"):
                 grid=False
@@ -132,6 +137,8 @@ def process_message(msg):
                                                                           'grid':grid,
                                                                           'speed':msg['params']['SPEED'],
                                                                           'snr':int(msg['params']['EXTRA'])})
+            # If somebody replies to a GRID? request, capture and save
+            # the reply.
             elif(msg['params']['CMD']==" GRID"):
                 grid=msg['params']['TEXT'].split()
                 band=calc_band(msg['params']['FREQ'])
@@ -147,14 +154,16 @@ def process_message(msg):
                                                                                   'grid':grid,
                                                                                   'speed':msg['params']['SPEED'],
                                                                                   'snr':False})
+            # If somebody reports who they're hearing, save that.
             elif(msg['params']['CMD']==" HEARING"):
                 grid=False
                 band=calc_band(msg['params']['FREQ'])
                 speed=msg['params']['SPEED']
                 if(msg['params']['GRID']!=""):
                     grid=msg['params']['GRID']
-                if(spots[msg['params']['FROM']] not in spots):
-                    spots[msg['params']['FROM']]={}
+                if('FROM' in msg['params']):
+                    if(spots[msg['params']['FROM']] not in spots):
+                        spots[msg['params']['FROM']]={}
                 if(not(error in msg['params']['TEXT'])):
                     hearing=msg['params']['TEXT'].split()[3:-1]
                     for h in hearing:
@@ -237,6 +246,12 @@ def rx_thread(name):
                     # process (for example, the result of a frequency
                     # query), do it. If it's just incoming text, queue
                     # it for the user.
+                    if('params' in list(message.keys())):
+                        if('TEXT' in list(message['params'].keys())):
+                            if(error in message['params']['TEXT']):
+                                message['rxerror']=True
+                            else:
+                                message['rxerror']=False
                     processed=False
                     try:
                         process_message(message)

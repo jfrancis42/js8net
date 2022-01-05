@@ -49,8 +49,8 @@ if __name__ == "__main__":
         print("Connected.")
     if(args.freq or args.freq_dial or args.freq_audio):
         f=get_freq()
-        if(args.dial_freq and args.freq_audio):
-            set_freq(args.dial_freq,args.freq_audio)
+        if(args.freq_dial and args.freq_audio):
+            set_freq(args.freq_dial,args.freq_audio)
         elif(args.freq and args.freq_audio):
             set_freq(args.freq_dial-args.freq_audio,args.freq_audio)
         elif(args.freq):

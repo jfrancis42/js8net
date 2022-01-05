@@ -84,6 +84,7 @@ if __name__ == "__main__":
             # course, assumes he doesn't change speed mid-stream
             # (which is unlikely, but not impossible).
             speed=get_speed()
+            done=False
             if(speed==0):
                 done=now+int(15*2.5)
             elif(speed==1):

@@ -411,13 +411,18 @@ def send_sms(phone,message):
     # Send an SMS message via JS8.
     with unique_lock:
         unique=unique+1
-        send_message("#APRSIS CMD :SMSGTE  :@"+phone+" "+message+"{%03d}" % unique)
+        send_message("@APRSIS CMD :SMSGTE  :@"+phone+" "+message+"{%03d}" % unique)
 
 def send_email(address,message):
     # Send an email message via JS8.
     with unique_lock:
         unique=unique+1
-        send_message("#APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
+        send_message("@APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
+
+def send_pota(park freq mode comment):
+    # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300).
+    # Your call is sent as configured in JS8Call.
+    send_message("@APRSIS CMD :POTA   :"+get_callsign()+" "+park+" "+str(freq)+" "+mode+" "+comment)
 
 def get_info():
     # Ask JS8Call for the configured info field.
@@ -438,7 +443,10 @@ def get_call_activity():
     queue_message({"params":{},"type":"RX.GET_CALL_ACTIVITY","value":""})
 
 def get_call_selected():
-    # Never quite figured out what this does...
+    # Never quite figured out what this does. I assume based on the
+    # name that it returns the value of whichever callsign has been
+    # clicked on in the right window, but I haven't gotten 'round to
+    # testing this theory.
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
 
 def get_band_activity():

@@ -419,7 +419,7 @@ def send_email(address,message):
         unique=unique+1
         send_message("@APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
 
-def send_pota(park freq mode comment):
+def send_pota(park,freq,mode,comment):
     # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300).
     # Your call is sent as configured in JS8Call.
     send_message("@APRSIS CMD :POTAGW   :"+get_callsign()+" "+park+" "+str(freq)+" "+mode+" "+comment)

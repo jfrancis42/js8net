@@ -162,12 +162,12 @@ def process_message(msg):
                 if(msg['params']['GRID']!=""):
                     grid=msg['params']['GRID']
                 if('FROM' in msg['params']):
-                    if(spots[msg['params']['FROM']] not in spots):
+                    if(msg['params']['FROM'] not in spots):
                         spots[msg['params']['FROM']]={}
                 if(not(error in msg['params']['TEXT'])):
                     hearing=msg['params']['TEXT'].split()[3:-1]
                     for h in hearing:
-                        if(h not in spots[msg['params']['FROM']]):
+                        if(h not in msg['params']['FROM']):
                             spots[msg['params']['FROM']][h]=[]
                         spots[msg['params']['FROM']][h].append({'time':msg['time'],
                                                                 'band':band,

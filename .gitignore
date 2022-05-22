@@ -4,3 +4,6 @@ rx.json*
 spots.json
 __pycache__
 *.pyc
+bin/*
+pota.txt
+

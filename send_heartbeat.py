@@ -36,7 +36,7 @@ if __name__ == "__main__":
         js8host="localhost"
 
     if(args.js8_port):
-        js8port=args.js8_port
+        js8port=int(args.js8_port)
     elif(os.environ.get("JS8PORT") and args.env):
         js8port=int(os.environ.get("JS8PORT"))
     else:
@@ -60,10 +60,11 @@ if __name__ == "__main__":
     if(args.verbose):
         print("Frequency set to ",get_freq())
     if(args.speed):
-        if(args.speed>=0 and args.speed<=4 and args.speed!=3):
+        speed=int(args.speed)
+        if(speed>=0 and speed<=4 and speed!=3):
             if(args.verbose):
-                print("Setting speed to ",str(args.speed))
-            set_speed(args.speed)
+                print("Setting speed to ",str(speed))
+            set_speed(speed)
     grid=False
     if(args.grid):
         grid=args.grid

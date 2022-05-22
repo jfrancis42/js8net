@@ -37,7 +37,7 @@ if __name__ == "__main__":
         js8host="localhost"
 
     if(args.js8_port):
-        js8port=args.js8_port
+        js8port=int(args.js8_port)
     elif(os.environ.get("JS8PORT") and args.env):
         js8port=int(os.environ.get("JS8PORT"))
     else:
@@ -53,8 +53,8 @@ if __name__ == "__main__":
             print("Connected.")
         if(args.freq or args.freq_dial or args.freq_audio):
             f=get_freq()
-            if(args.dial_freq and args.freq_audio):
-                set_freq(args.dial_freq,args.freq_audio)
+            if(args.freq_dial and args.freq_audio):
+                set_freq(args.freq_dial,args.freq_audio)
             elif(args.freq and args.freq_audio):
                 set_freq(args.freq_dial-args.freq_audio,args.freq_audio)
             elif(args.freq):
@@ -64,10 +64,11 @@ if __name__ == "__main__":
         if(args.verbose):
             print("Frequency set to ",get_freq())
         if(args.speed):
-            if(args.speed>=0 and args.speed<=4 and args.speed!=3):
+            speed=int(args.speed)
+            if(speed>=0 and speed<=4 and speed!=3):
                 if(args.verbose):
-                    print("Setting speed to ",str(args.speed))
-                set_speed(args.speed)
+                    print("Setting speed to ",str(speed))
+                set_speed(speed)
         send_email(args.addr,args.msg)
         time.sleep(3)
         if(args.verbose):

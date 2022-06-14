@@ -160,6 +160,32 @@ send_message(message)
 
 Send 'message' in the next transmit cycle.
 
+There are also three functions related to your INBOX and sending
+messages:
+
+```python3
+send_inbox_message(dest_call,message)
+```
+
+This function immediately sends a message to dest_call to be stored in
+his INBOX. Note that this function DOES NOT check for the ACK message
+from the receiver. That's left as an exercise for the programmer.
+
+```python3
+get_messages()
+```
+
+This funtion returns an array of all messages (READ, UNREAD, and
+STORED) in your own mailbox.
+
+```python3
+store_message(callsign,text)
+```
+
+This function stores a message in your INBOX for pickup by another
+user. The function returns your entire INBOX, including the new
+message that you just STOREd.
+
 Sending of data, querying of status, and setting configuration are handled by the function calls above. Receiving data, however, is handled more directly by your own code.
 
 Incoming messages from JS8Call are intercepted and parsed by the js8net library. The bulk of these are quietly handled, and various internal tables and states are automatically updated. Actual text sent by other users, however, are passed along to the rx_queue for your own processing. Note that the rx_queue is protected by a mutex called rx_lock. Use of this lock is necessary to prevent simultaneous reading and writing to the queue.

@@ -44,6 +44,7 @@ global ptt
 global text
 global last_rx
 global mycall
+global messages
 
 spots={}
 unique=0
@@ -88,6 +89,10 @@ def process_message(msg):
     global spots_lock
     global mycall
     global error
+    global messages
+    # Process INBOX messages.
+    if('MESSAGES' in msg['params']):
+        messages=msg['params']['MESSAGES']
     # If it's a SPOT message, we get everything but speed.
     if(msg['type']=="RX.SPOT"):
         with spots_lock:
@@ -105,7 +110,7 @@ def process_message(msg):
                                                          'speed':False,
                                                          'snr':msg['params']['SNR']})
     # If it's a DIRECTED message, we should get everything we hope
-    # for, plus maybe some extras, depending on what CMD.
+    # for, plus maybe some extras, depending on what the CMD is.
     if(msg['type']=="RX.DIRECTED"):
         with spots_lock:
             band=calc_band(msg['params']['FREQ'])
@@ -331,7 +336,7 @@ def start_net(host,port):
 
     # Open a socket to JS8Call.
     s=socket.socket()
-    s.connect((host,port))
+    s.connect((host,int(port)))
     s.settimeout(1)
 
     # Start the RX thread. We make this a daemon thread so that it
@@ -370,6 +375,21 @@ def set_freq(dial,offset):
     queue_message({"params":{"DIAL":dial,"OFFSET":offset},"type":"RIG.SET_FREQ","value":""})
     time.sleep(0.1)
     return(get_freq())
+
+def get_messages():
+    # Fetch all inbox messages.
+    queue_message({"params":{},"type":"INBOX.GET_MESSAGES","value":""})
+    global messages
+    messages=False
+    while(not(messages)):
+        time.sleep(0.1)
+    return(messages)
+
+def store_message(callsign,text):
+    # Store a message in the INBOX.
+    queue_message({"params":{"CALLSIGN":callsign,"TEXT":text},"type":"INBOX.STORE_MESSAGE","value":""})
+    time.sleep(0.1)
+    return(get_messages())
 
 def get_callsign():
     # Ask JS8Call for the configured callsign.

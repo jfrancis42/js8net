@@ -41,7 +41,8 @@ global info
 global call
 global speed
 global ptt
-global text
+global tx_text
+global rx_text
 global last_rx
 global mycall
 global messages
@@ -217,7 +218,8 @@ def rx_thread(name):
     global call
     global speed
     global ptt
-    global text
+    global tx_text
+    global rx_text
     n=0
     left=False
     empty=True
@@ -292,13 +294,13 @@ def rx_thread(name):
                         processed=True
                     elif(message['type']=="TX.TEXT"):
                         processed=True
-                        text=message['value']
+                        tx_text=message['value']
                     elif(message['type']=="RX.TEXT"):
                         # Note that we don't mark this as 'processed'
                         # (even though it is), as the user may want to
                         # watch for incoming text to take his own
                         # action.
-                        text=message['value']
+                        rx_text=message['value']
                     elif(message['type']=="RX.SPOT"):
                         # Note that we don't mark this as 'processed'
                         # (even though it is), as the user may want to
@@ -386,7 +388,7 @@ def get_messages():
     return(messages)
 
 def store_message(callsign,text):
-    # Store a message in the INBOX.
+    # Store a message in the INBOX for later pickup by recipient.
     queue_message({"params":{"CALLSIGN":callsign,"TEXT":text},"type":"INBOX.STORE_MESSAGE","value":""})
     time.sleep(0.1)
     return(get_messages())
@@ -475,21 +477,27 @@ def get_band_activity():
 
 def get_rx_text():
     # Get the contents of the yellow window.
-    global text
-    text='-=-=-=-shibboleeth-=-=-=-'
+    global rx_text
+    rx_text='-=-=-=-shibboleeth-=-=-=-'
     queue_message({"params":{},"type":"RX.GET_TEXT","value":""})
-    while(text=='-=-=-=-shibboleeth-=-=-=-'):
+    while(rx_text=='-=-=-=-shibboleeth-=-=-=-'):
         time.sleep(0.1)
-    return(text)
+    return(rx_text)
     
 def get_tx_text():
     # Get the contents of the box below yellow window.
-    global text
-    text='-=-=-=-shibboleeth-=-=-=-'
+    global tx_text
+    tx_text='-=-=-=-shibboleeth-=-=-=-'
     queue_message({"params":{},"type":"TX.GET_TEXT","value":""})
-    while(text=='-=-=-=-shibboleeth-=-=-=-'):
+    while(tx_text=='-=-=-=-shibboleeth-=-=-=-'):
         time.sleep(0.1)
-    return(text)
+    return(tx_text)
+
+def set_tx_text(text):
+    # Set the contents of the box below yellow window.
+    global tx_text
+    queue_message({"params":{},"type":"TX.SET_TEXT","value":text})
+    return(get_tx_text())
 
 def get_speed():
     # Ask JS8Call what speed it's currently configured for.

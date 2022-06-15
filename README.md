@@ -10,11 +10,36 @@ js8net is a python3 package for interacting with the JS8Call API. It works exclu
 
 The JS8Call API is extremely painful to use directly, for several reasons. First, it's essentially undocumented. While there are some partial docs floating around, mostly, you have to read the JS8Call source code to find the calls and understand how to use them. Second, the API is completely asynchronous. You send commands to JS8Call whenever you wish, and it sends whatever data it has ready at any given time, which may or may not include a reply to a query or command you've sent, whenever it darned well pleases. As a result, and API library has to keep track of what queries were sent, then attempt to match up pseudo-random replies with the original queries.
 
-This library is an attempt to hide that complexity behind a much more traditional query/reply paradigm.
+Overall, JS8Call's API is horrifying, painfully incomplete, and the
+documentation nearly non-existent. If you want to have a look at the
+C++ source where the API calls are implemented, look at the
+MainWindow::networkMessage() function in mainwindow.cpp in the JS8Call
+source code.
 
-Before you start, note that there are a series of bugs in JS8Call where the GUI does not properly reflect changes made to the state or configuration of the system. For example, if you change the grid square using the API, the GUI will still show the old grid square. Or if you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look very strange on screen. There are bugs open against JS8Call to fix this. Jordan has also repeatedly promised a new, better API at some point in the future.
+When controlling JS8Call via the API, you'll immediately notice some
+very painful shortcomings. For example, if there's a glitch in serial
+comms controlling your radio, a dialog will pop up that can only be
+cleared with the mouse. You cannot mark INBOX messages as read (or
+delete them). Any changes made via the API (grid square or speed, for
+example) do not show up in the GUI, even though they are now different
+(ie, the GUI will continue to show time intervals for NORMAL speed
+even though you've switched to TURBO using the API). Most irritating
+of all, the "user activity timeout" can be set to a maximum of 1440
+minutes (24 hours). And API activity does not trigger the watchdog
+reset. Which means that if you're using the API to control JS8Call,
+you have to manually click the mouse at least once per day, else all
+transmit activity is hung until you click "OK" on the timeout
+popup. There are several ways to fix this, but the most effective
+(though not the easiest, given the pain of the JS8Call build
+environment) is to set IDLE_BLOCKS_TX to FALSE in mainwindow.cpp and
+recompile from source.
 
-While JS8Call by and large does work well, it's been 18+ months since the last release, and there are numerous anticipated bug fixes supposedly in the works that should make JS8Call a much better piece of software.
+This library is an attempt to hide the API's complexity behind a more traditional query/reply paradigm.
+
+Before you start, note that there are a series of bugs (or more
+accurately, a terrible software architecture) in JS8Call where the GUI does not properly reflect changes made to the state or configuration of the system. For example, if you change the grid square using the API, the GUI will still show the old grid square. Or if you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look very strange on screen. There are bugs open against JS8Call to fix this. Jordan has also repeatedly promised a new, better API at some point in the future.
+
+While JS8Call by and large does work well, it's been two years since the last release, and there are numerous anticipated bug fixes supposedly in the works that should make JS8Call a much better piece of software.
 
 To get started, import the library, then tell it to connect to your JS8Call instance:
 
@@ -130,6 +155,12 @@ Get the contents of the yellow window.
 
 ```python3
 get_tx_text()
+```
+
+Set the contents of the yellow window.
+
+```python3
+set_tx_text(text)
 ```
 
 Get the contents of the box below yellow window.

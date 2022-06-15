@@ -68,6 +68,8 @@ the last release, and there are numerous anticipated bug fixes
 supposedly in the works that should make JS8Call a much better piece
 of software to work with via the API.
 
+## Getting Started
+
 To get started, import the library, then tell it to connect to your
 JS8Call instance:
 

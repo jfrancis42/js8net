@@ -37,7 +37,7 @@ from js8net import *
 start_net("10.1.1.141",2442)
 ```
 
-At this point, there are two threads running. One thread receives requests from your code, and delivers them to JS8Call. The second thread receives the random data sent my JS8Call, processes that data, and provides it back to you, the user.
+At this point, there are two threads running. One thread receives requests from your code, and delivers them to JS8Call. The second thread receives the random data sent by JS8Call, processes that data, and provides it back to you, the user.
 
 Generally speaking, you do not interact directly with the first queue. You make function calls using the js8net library, and those function calls are internally translated to the proper queries, and pushed into the queue for delivery. For example, to ask JS8Call for the currently configured Maidenhead grid square, you can simple do the following:
 
@@ -125,7 +125,7 @@ Get the contents of the right white box.
 get_call_selected()
 ```
 
-Never quite figured out what this does...
+Return the call sign that's currently selected in the GUI.
 
 ```python3
 get_band_activity()
@@ -137,13 +137,13 @@ Get the contents of the left white box.
 get_rx_text()
 ```
 
-Get the contents of the yellow window.
+Get the contents of the white box below the yellow window.
 
 ```python3
 get_tx_text()
 ```
 
-Set the contents of the yellow window.
+Set the contents of the white box below the yellow window.
 
 ```python3
 set_tx_text(text)
@@ -167,7 +167,7 @@ Set the JS8Call transmission speed.  slow==4, normal==0, fast==1, turbo==2
 raise_window()
 ```
 
-Raise the JS8Call window to the top.
+Raise the JS8Call window to the top on the screen.
 
 ```python3
 send_message(message)
@@ -181,25 +181,27 @@ There are also three functions related to your INBOX and sending messages:
 send_inbox_message(dest_call,message)
 ```
 
-This function immediately sends a message to dest_call to be stored in his INBOX. Note that this function DOES NOT check for the ACK message from the receiver. That's left as an exercise for the programmer.
+This function immediately sends a message to dest_call to be stored in his INBOX. Note that this function __does not__ check for a successful ACK message from the receiver. That's left as an exercise for the programmer.
 
 ```python3
 get_messages()
 ```
 
-This funtion returns an array of all messages (READ, UNREAD, and STORED) in your own mailbox.
+This function returns an array of all messages (READ, UNREAD, and STORED) in your own mailbox.
 
 ```python3
 store_message(callsign,text)
 ```
 
-This function stores a message in your INBOX for pickup by another user. The function returns your entire INBOX, including the new message that you just STOREd.
+This function stores a message in your INBOX for pickup by another user. The function returns your entire INBOX, including the new message that you just stored.
+
+## Receiving
 
 Sending of data, querying of status, and setting configuration are handled by the function calls above. Receiving data, however, is handled more directly by your own code.
 
 Incoming messages from JS8Call are intercepted and parsed by the js8net library. The bulk of these are quietly handled, and various internal tables and states are automatically updated. Actual text sent by other users, however, are passed along to the rx_queue for your own processing. Note that the rx_queue is protected by a mutex called rx_lock. Use of this lock is necessary to prevent simultaneous reading and writing to the queue.
 
-There are three types of messages that will come in at random from JS8Call, and three more types that will occur as the result of queries you make with the functions detailed above. The three types of messages that come from other JS8Call users are:
+There are three types of messages that will come in at random from JS8Call, and four more types that will occur as the result of queries you make with the functions detailed above. The three types of messages that come from other JS8Call users are:
 
 * RX.SPOT - A spot message.
 
@@ -209,7 +211,7 @@ There are three types of messages that will come in at random from JS8Call, and 
 
 Unless you are doing something particularly interesting or different, it's likely that RX.DIRECTED is what you'll be interested in.
 
-These messages are kept in a python queue. The following documention will be helpful in understanding how to properly deal with queued data:
+These messages are kept in a python queue. The following documentation will be helpful in understanding how to properly deal with queued data:
 
 https://docs.python.org/3/library/queue.html
 
@@ -251,11 +253,12 @@ while(True):
 
 You can, of course, do far more than simply print the received JSON blob.
 
-The three additional types of messages that will show up in the queue are:
+The four additional types of messages that will show up in the queue are:
 
 * RX.CALL_ACTIVITY - The result of the function call get_call_activity()
 * RX.GET_BAND_ACTIVITY - The result of the function call get_band_activity()
 * RX.TEXT - The result of the function call get_rx_text()
+* INBOX - The result of the functions get_messages() or store_message()
 
 See above for documentation on what these calls do.
 

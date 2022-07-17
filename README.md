@@ -14,11 +14,11 @@ The JS8Call API is a bit painful to use directly from your own code for several 
 
 - The API is completely asynchronous. You send commands to JS8Call whenever you wish, and it sends the reply whenever it's good and ready. Or maybe not. As a result, without an API library, you have to keep track of what queries were sent, then attempt to match up random replies with the original queries.
 
-- It's incomplete. You cannot mark INBOX messages as read (or delete them). You cannot toggle SPOT on or off. You cannot trigger a contact log. You cannot toggle TX on or off. You cannot enable or disable Autoreply, Heartbeat Networking, Heartbeat Acknowledgements, change Decoder Sensitivity, turn simultaneous decoding on or off, change callsign groups, change Station Status, change the CQ or Reply messages, and the list goes on and on.
+- It's incomplete. You cannot mark INBOX messages as read (or delete them). You cannot toggle SPOT on or off. You cannot trigger a contact log. You cannot toggle TX on or off. You cannot enable or disable Autoreply, Heartbeat Networking, Heartbeat Acknowledgements, change Decoder Sensitivity, turn simultaneous decoding on or off, change callsign groups, change Station Status, change the CQ or Reply messages. I'd also love to see an API call to generate a message checksum (for a message I'm generating) and to validate the checksum of a received message.
 
 - The API is completely disconnected from the GUI. If you make a change using the API, for example changing the speed from Normal to Slow or changing your grid square, those changes are invisible in the GUI. The changes happen, but they're not reflected on the screen, leading to a very confusing state.
 
-- API usage does not reset the idle timeout. Meaning that after the specified period of time without interacting with the GUI, all transmission stops until you click the timeout "OK" notice with a mouse. And the maximum time the timeout can be set for is only 1440 minutes (24 hours). You can get rid of this behavior by setting IDLE_BLOCKS to FALSE in the C++ source and recompiling, but recompiling JS8Call is quite painful compared with most software, and is horrifically slow on the Pi.
+- API usage does not reset the idle timeout. Meaning that after the specified period of time without interacting with the GUI, all transmission stops until you click the timeout "OK" notice with a mouse. And the maximum time the timeout can be set for is only 1440 minutes (24 hours). You can get rid of this behavior by setting IDLE_BLOCKS to FALSE in the C++ source and recompiling, but recompiling JS8Call is quite painful compared with most software, and is horrifically slow on the Pi. I have an icky, but usable work-around below.
 
 - There are many errors and notices, such as serial comms errors between the software and your laptop, that can only be cleared or retried by clicking the mouse on the screen. They cannot be handled via the API.
 
@@ -27,6 +27,20 @@ This library is an attempt to hide as much of the API's complexity as possible b
 As you use this API, keep in mind the design that doesn't allow API changes to be visible in the GUI. It will confuse you until you get used to it. If you change the grid square using the API, the GUI will still show the old grid square. If you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look very strange on screen. There are bugs open against JS8Call to fix this.
 
 While JS8Call by and large does work well, it's been two years since the last release, and there are numerous anticipated bug fixes supposedly in the works that should make JS8Call a much better piece of software to work with via the API.
+
+## Transmit Timeout Work-Around
+
+If you're not interested in recompiling JS8Call from scratch, there's a work-around (at least for Linux users): xdotool. xdotool is a handy tool for faking various mouse and keyboard events under X11. I wrote a simple little shell script that keeps JS8Call from going to sleep by moving the mouse to the text entry box in the GUI once per hour, then "clicking" the left mouse button. Once per hour is very much overkill, as once ever 24 hours would be enough. Whatever, it works on both x86 Linux and on the Pi. Windows and Mac users, I don't know the answer for you. You'll have to determine the appropriate X and Y coordinates on your screen for the little box to click in, and that will depend on the resolution of your screen, the size of the JS8Call window (I maximize mine), and the position of the JS8Call windows relative to the top left corner (which isn't relevant if it's maximized, it's always 0,0). On my laptop, the right spot is 1300,1100. So I just put the following script in a file and run it in an xterm:
+````bash
+#!/bin/bash
+
+while [ 1 ]
+do
+	xdotool search --name "JS8Call" windowactivate %@ \
+		mousemove 1300 1100 click 1
+	sleep 3600
+done
+````
 
 ## Getting Started
 

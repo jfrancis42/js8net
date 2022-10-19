@@ -50,6 +50,9 @@ global messages
 spots={}
 unique=0
 
+# Note that this assumes US bandplan. TODO: Figure out how to make
+# this "locale-friendly" for different countries with different
+# bandplans.
 def calc_band(freq):
     if(freq>=1800000 and freq<=2000000):
         return("160m")
@@ -509,6 +512,12 @@ def get_speed():
         time.sleep(0.1)
     return(speed)
     
+def speed_name(speed):
+    if(speed>=0 and speed<=4):
+        return(['Normal', 'Fast', 'Turbo', 'Invalid', 'Slow'][speed])
+    else:
+        return('Invalid')
+
 def set_speed(speed):
     # Set the JS8Call transmission speed.
     # slow==4, normal==0, fast==1, turbo==2
@@ -544,5 +553,21 @@ def alive():
     else:
         return(false)
     
+def query_snr(dest_call):
+    # Query a station for your SNR report.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" SNR? "})
+
+def query_grid(dest_call):
+    # Query a station for their grid square.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" GRID? "})
+
+def query_status(dest_call):
+    # Query a station for their status.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" STATUS? "})
+
+def query_hearing(dest_call):
+    # Query a station for top stations heard.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" HEARING? "})
+
 if __name__ == '__main__':
     print("This is a library and is not intended for stand-alone execution.")

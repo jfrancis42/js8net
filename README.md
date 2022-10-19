@@ -6,7 +6,7 @@
 
 ## The Library
 
-js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it.
+js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion.
 
 The JS8Call API is a bit painful to use directly from your own code for several reasons:
 
@@ -14,7 +14,7 @@ The JS8Call API is a bit painful to use directly from your own code for several 
 
 - The API is completely asynchronous. You send commands to JS8Call whenever you wish, and it sends the reply whenever it's good and ready. Or maybe not. As a result, without an API library, you have to keep track of what queries were sent, then attempt to match up random replies with the original queries.
 
-- It's incomplete. You cannot mark INBOX messages as read (or delete them). You cannot toggle SPOT on or off. You cannot trigger a contact log. You cannot toggle TX on or off. You cannot enable or disable Autoreply, Heartbeat Networking, Heartbeat Acknowledgements, change Decoder Sensitivity, turn simultaneous decoding on or off, change callsign groups, change Station Status, change the CQ or Reply messages, and the list goes on and on.
+- It's incomplete. You cannot mark INBOX messages as read (or delete them). You cannot toggle SPOT on or off. You cannot trigger a contact log. You cannot toggle TX on or off. You cannot enable or disable Autoreply, Heartbeat Networking, Heartbeat Acknowledgements, change Decoder Sensitivity, turn simultaneous decoding on or off, change callsign groups, change Station Status, change the CQ or Reply messages. I'd also love to see an API call to generate a message checksum (for a message I'm generating) and to validate the checksum of a received message.
 
 - The API is completely disconnected from the GUI. If you make a change using the API, for example changing the speed from Normal to Slow or changing your grid square, those changes are invisible in the GUI. The changes happen, but they're not reflected on the screen, leading to a very confusing state.
 
@@ -24,7 +24,7 @@ The JS8Call API is a bit painful to use directly from your own code for several 
 
 This library is an attempt to hide as much of the API's complexity as possible behind a more traditional query/reply paradigm. It also tries to make up for some of the API's shortcomings as best it can.
 
-As you use this API, keep in mind the design that doesn't allow API changes to be visible in the GUI. It will confuse you until you get used to it. If you change the grid square using the API, the GUI will still show the old grid square. If you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look very strange on screen. There are bugs open against JS8Call to fix this.
+As you use this API, keep in mind the architecture of JS8Call itself that doesn't allow API changes to be visible in the GUI. It will confuse you until you get used to it. If you change the grid square using the API, the GUI will still show the old grid square. If you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look wrong on screen. There are bugs open against JS8Call to fix this.
 
 While JS8Call by and large does work well, it's been two years since the last release, and there are numerous anticipated bug fixes supposedly in the works that should make JS8Call a much better piece of software to work with via the API.
 
@@ -265,3 +265,16 @@ See above for documentation on what these calls do.
 ## Executables
 
 There are several scripts bundled with the library that show how to do various things, and are useful in their own right. Each of them requires command-line flags or environment variables that point to the JS8Call server. One can use --js8_host and --js8_port, OR you can the environment variables JS8HOST and JS8PORT and combine that with the flag --env (to tell the script to use the env variables). The script that sends your APRS grid square can also optionally get your location from a GPSD server. This can be specified with either --gpsd_host and --gpsd_port, or by setting the GPSDHOST and GPSDPORT environment variables, combined with the --env flag.
+
+## The Web Interface
+
+I'm working on a new web interface for monitoring and interacting with JS8Call using the js8net library. It's very much in an alpha stage at this point, but it does (mostly) work. If you point it at a running JS8Call instance, it will provide you a running update on what your system is doing and who it's hearing. If you provide it with an EN.dat file (downloaded from the FCC at the link below) in the directory you run the web interface from, it'll even include the info on the callsigns heard. Note that in it's current alpha state, this only works for US callsigns.
+
+The download link for the FCC callsign date (updated daily, though you certainly don't have to update your own file daily) is here:
+ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
+
+At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for this info, allowing for resolution of non-US callsigns.
+
+For now, the "Send Grid" and "Send Heartbeat" buttons do work perfectly. The "Send Text Message" and "Send Email" buttons do not (yet). And the "Query" button for asking for unresolved grid squares sort of work some of the time (actually, it sends the query fine, it just sometimes doesn't "hear" the answer properly). It's alpha code. Deal with it.
+
+Note that IMHO, it would NOT be wise to expose this web page to the open internet. It allows anyone who stumbles across the page to send transmissions over radio with your callsign attached to them, but completely out of your control. In most countries (USA include), this is illegal. I anticipate putting a --read-only flag in the code at some point so you can expose what your station hears without the risk of random people sending data, but that does not yet exist. You've been warned...

@@ -175,6 +175,7 @@ def traffic_table ():
 
 def main_page ():
     doc, tag, text=Doc().tagtext()
+    global refresh
     with tag('html', lang='en'):
         with tag('body'):
             with tag('script', type='text/javascript'):
@@ -198,7 +199,7 @@ def main_page ():
                 text('      clearInterval(intervalId);\n')
                 text('    }\n')
                 text('  }\n')
-                text('}, 1000);\n')
+                text('}, '+str(refresh*1000)+');\n')
             with tag('div', id='wrapper'):
                 with tag('table'):
                     with tag('tr'):

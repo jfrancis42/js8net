@@ -9,3 +9,5 @@ tests/*
 test.py
 *~
 EN.dat
+traffic.*
+old/*

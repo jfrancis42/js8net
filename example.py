@@ -10,7 +10,7 @@ from os.path import exists
 from js8net import *
 
 # Main program.
-if __name__ == '__main__':
+if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description="Example of using js8net.py")
     parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
     parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")

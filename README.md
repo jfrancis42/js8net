@@ -6,7 +6,7 @@
 
 ## The Library
 
-js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion.
+js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion. Likewise, it's intended to run on "unix-like" operating systems (OSX, Linux, and the various BSD flavors). It *might* work on Windows. It might not. The code has not been written to excluded Windows, but I have no simple way to test it. The generated web pages (see the bottom of this document) should be viewable on any modern Chromium-based browser and Firefox. I have not tested them on IE or Safari.
 
 The JS8Call API is a bit painful to use directly from your own code for several reasons:
 
@@ -280,15 +280,48 @@ See above for documentation on what these calls do.
 
 There are several scripts bundled with the library that show how to do various things, and are useful in their own right. Each of them requires command-line flags or environment variables that point to the JS8Call server. One can use --js8_host and --js8_port, OR you can the environment variables JS8HOST and JS8PORT and combine that with the flag --env (to tell the script to use the env variables). The script that sends your APRS grid square can also optionally get your location from a GPSD server. This can be specified with either --gpsd_host and --gpsd_port, or by setting the GPSDHOST and GPSDPORT environment variables, combined with the --env flag.
 
-## The New (very alpha quality) Web Interface
+## Distributed Data Collection and Web Interface
 
-I'm working on a new web interface for monitoring and interacting with JS8Call using the js8net library. It's very much in an alpha stage at this point, but it does (mostly) work. If you point it at a running JS8Call instance, it will provide you a running update on what your system is doing and who it's hearing. If you provide it with an EN.dat file (downloaded from the FCC at the link below) in the directory you run the web interface from, it'll even include the info on the callsigns heard. Note that in it's current alpha state, this only works for US callsigns.
+It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time.
 
-The download link for the FCC callsign date (updated daily, though you certainly don't have to update your own file daily) is here:
+### Aggregator
+aggregator.py is the heart of the system. The aggregator receives JS8Call data from the collectors, processes it and stores it, then makes it available via a REST-ish interface as JSON data for consumers (such as the monitor, below). This data can also be consumed by your own API scripts. The purpose of the aggregator is to accept data from as many collectors (tied to as many radios) as you wish. These might be your own radios, or those of a group working together. The aggregator listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN. The same port is also used for extracting the collected data for display or analysis.
+
+In order to run these scripts, you'll need to install the yattag python library and the graphviz software package (the web interface generates connectivity graphs of all the observed stations, though the web interface does not yet actually display these images - it's on the to-do list).
+
+To install the python library, run one of these (depending on where you want the libraries installed):
+```
+pip3 install yattag
+```
+```
+sudo pip3 install yattag
+```
+
+Installing graphviz will vary across operating systems, but should generally be something similar to the following:
+
+```
+sudo apt install graphviz
+```
+```
+sudo yum install graphviz
+```
+```
+brew install graphviz
+```
+
+### Collector
+collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to an aggregator. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the aggregator) may be pointed at a single aggregator. If the collector operator specifies their call sign, that data will be flagged within the aggregator for visible highlighting, etc.
+
+### Monitor
+monitor.py talks to an aggregator on TCP 8001 and periodically (by default, every three seconds) fetches all available data. That data is then made available as a web page on TCP 8000 that can be viewed on any web browser (including phones and tablets). As with the aggregator, this port may be exposed to the Internet, though care should be taken, as future features may allow any user of the web page to send their own data via HF (though there will be options to disable transmissions). Expose to the Internet at your own risk. It's really intended for internal (LAN) use, not public-facing. As with the aggregator, the port number may be changed, if desired. If you want to run it on port 80, you'll either have to run it as root (a very very very bad idea that you shouldn't even consider), or front-end it with something like nginx or port forwarding/translation in your router/firewall. There are hundreds of tutorials for both methods on the web; this is left as an exercise for the reader.
+
+### Web Interface
+
+The first table includes the current list of collectors, one for each instance of JS8Call.
+
+The second table includes all traffic seen for the last thirty minutes (this timeout can be changed with command-line flags). If you click on a call sign in the first two columns, a new window/tab will open on pskreporter.info showing all traffic to/from that callsign. If you've installed the FCC callsign file (see below), there will be an extra "Calls" field showing info on the two call signs involved in each transmission. Clicking on one of these calls will take you to that ham's QRZ.com page (assuming you're logged into qrz).
+
+To have call owner information available, you'll need to download the FCC database and copy the EN.dat file into the directory you run the monitor.py process from. This file is updated daily (though there's no need for you to fetch this file daily) and can be downloaded from:
 ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
 
-At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for this info, allowing for resolution of non-US callsigns.
-
-For now, the "Send Grid" and "Send Heartbeat" buttons do work perfectly. The "Send Text Message" and "Send Email" buttons do not (yet). And the "Query" button for asking for unresolved grid squares sort of work some of the time (actually, it sends the query fine, it just sometimes doesn't "hear" the answer properly). It's alpha code. Deal with it.
-
-Note that IMHO, it would NOT be wise to expose this web page to the open internet. It allows anyone who stumbles across the page to send transmissions over radio with your callsign attached to them, but completely out of your control. In most countries (USA include), this is illegal. I anticipate putting a --read-only flag in the code at some point so you can expose what your station hears without the risk of random people sending data, but that does not yet exist. You've been warned...
+At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for non-USA call info. For now, the web interface is somewhat USA-centric.

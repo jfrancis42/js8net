@@ -39,6 +39,38 @@ def main_page ():
     global refresh
     doc, tag, text=Doc().tagtext()
     with tag('html', lang='en'):
+        with tag('head'):
+            with tag('style'):
+                text('.styled-table {')
+                text('    border-collapse: collapse;')
+                text('    margin: 25px 0;')
+                text('    font-size: 0.9em;')
+                text('    font-family: sans-serif;')
+                text('    min-width: 400px;')
+                text('    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);')
+                text('}')
+                text('.styled-table thead tr {')
+                text('    background-color: #689F38;')
+                text('    color: #ffffff;')
+                text('    text-align: left;')
+                text('}')
+                text('.styled-table th,')
+                text('.styled-table td {')
+                text('    padding: 12px 15px;')
+                text('}')
+                text('.styled-table tbody tr {')
+                text('    border-bottom: 1px solid #dddddd;')
+                text('}')
+                text('.styled-table tbody tr:nth-of-type(even) {')
+                text('    background-color: #f3f3f3;')
+                text('}')
+                text('.styled-table tbody tr:last-of-type {')
+                text('    border-bottom: 2px solid #009879;')
+                text('}')
+                text('.styled-table tbody tr.active-row {')
+                text('    font-weight: bold;')
+                text('    color: #009879;')
+                text('}')
         with tag('body'):
             with tag('script', type='text/javascript'):
                 text('\nvar intervalId = setInterval(function() {\n')
@@ -52,11 +84,11 @@ def main_page ():
                 text('  }\n')
                 text('}, '+str(refresh*1000)+');\n')
             with tag('div', id='wrapper'):
-                with tag('table', id='stations', border=2):
+                with tag('table', id='stations', klass='styled-table'):
                     pass
                 with tag('br'):
                     pass
-                with tag('table', id='traffic', border=2):
+                with tag('table', id='traffic', klass='styled-table'):
                     pass
     return(doc.getvalue())
 
@@ -74,62 +106,63 @@ def stations_table ():
     global uuids
     global max_age
     doc, tag, text=Doc().tagtext()
-    with tag('tr'):
-        with tag('th', style='background-color:#C0C0C0'):
-            text('TRX')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Call')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Grid')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Host')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Port')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Speed')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Dial')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Carrier')
-#        with tag('th', style='background-color:#C0C0C0'):
-#            text('Grid')
-#        with tag('th', style='background-color:#C0C0C0'):
-#            text('Heartbeat')
-        for u in list(stations.keys()):
-            if(stations[u]['time']>=time.time()-max_age):
-                with tag('tr'):
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(str(uuids[u]))
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(stations[u]['call'])
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(stations[u]['grid'])
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(stations[u]['host'])
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(str(stations[u]['port']))
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(speed_name(int(stations[u]['speed'])))
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(str(stations[u]['dial']/1000.0)+' khz')
-                    with tag('td', style='text-align:center;padding:6px'):
-                        text(str(stations[u]['carrier'])+' hz')
-#                    with tag('td', style='text-align:center;padding:6px'):
-#                        with tag('form', action='/', method='post'):
-#                            with tag('input', type='hidden', value='true', name='send-grid'):
-#                                pass
-#                            with tag('input', type='hidden', value=u, name='uuid'):
-#                                pass
-#                            with tag('input', type='submit', value='Send'):
-#                                pass
-#                    with tag('td', style='text-align:center;padding:6px'):
-#                        with tag('form', action='/', method='post'):
-#                            with tag('input', type='hidden', value='true', name='send-hb'):
-#                                pass
-#                            with tag('input', type='hidden', value=u, name='uuid'):
-#                                pass
-#                            with tag('input', type='submit', value='Send'):
-#                                pass
+    with tag('thead'):
+        with tag('tr'):
+            with tag('th'):
+                text('TRX')
+            with tag('th'):
+                text('Call')
+            with tag('th'):
+                text('Grid')
+            with tag('th'):
+                text('Host')
+            with tag('th'):
+                text('Port')
+            with tag('th'):
+                text('Speed')
+            with tag('th'):
+                text('Dial')
+            with tag('th'):
+                text('Carrier')
+#            with tag('th'):
+#                text('Grid')
+#            with tag('th'):
+#                text('Heartbeat')
+    for u in list(stations.keys()):
+        if(stations[u]['time']>=time.time()-max_age):
+            with tag('tr'):
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(str(uuids[u]))
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(stations[u]['call'])
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(stations[u]['grid'])
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(stations[u]['host'])
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(str(stations[u]['port']))
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(speed_name(int(stations[u]['speed'])))
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(str(stations[u]['dial']/1000.0)+' khz')
+                with tag('td', style='text-align:center;padding:6px'):
+                    text(str(stations[u]['carrier'])+' hz')
+#                with tag('td', style='text-align:center;padding:6px'):
+#                    with tag('form', action='/', method='post'):
+#                        with tag('input', type='hidden', value='true', name='send-grid'):
+#                            pass
+#                        with tag('input', type='hidden', value=u, name='uuid'):
+#                            pass
+#                        with tag('input', type='submit', value='Send'):
+#                            pass
+#                with tag('td', style='text-align:center;padding:6px'):
+#                    with tag('form', action='/', method='post'):
+#                        with tag('input', type='hidden', value='true', name='send-hb'):
+#                            pass
+#                        with tag('input', type='hidden', value=u, name='uuid'):
+#                            pass
+#                        with tag('input', type='submit', value='Send'):
+#                            pass
     return(doc.getvalue())
 
 def traffic_table():
@@ -140,28 +173,29 @@ def traffic_table():
     global uuids
     global max_age
     doc, tag, text=Doc().tagtext()
-    with tag('tr'):
-        with tag('th', style='background-color:#C0C0C0'):
-            text('TRX')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Call')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Destination')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Grid')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Age')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('SNR')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Speed')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Freq')
-        if(len(calls)>0):
-            with tag('th', style='background-color:#C0C0C0'):
-                text('Calls')
-        with tag('th', style='background-color:#C0C0C0'):
-            text('Text')
+    with tag('thead'):
+        with tag('tr'):
+            with tag('th'):
+                text('TRX')
+            with tag('th'):
+                text('Call')
+            with tag('th'):
+                text('Destination')
+            with tag('th'):
+                text('Grid')
+            with tag('th'):
+                text('Age')
+            with tag('th'):
+                text('SNR')
+            with tag('th'):
+                text('Speed')
+            with tag('th'):
+                text('Freq')
+            if(len(calls)>0):
+                with tag('th'):
+                    text('Station(s)')
+            with tag('th'):
+                text('Received Text')
     # https://pskreporter.info/pskmap.html?preset&callsign=n0gq&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205
     with traffic_lock:
         for tfc in sorted(traffic,reverse=True,key=lambda n: n['time']):
@@ -402,3 +436,4 @@ if(__name__ == '__main__'):
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 # if(type(stations[u]['carrier']).__name__ =='str'):
+# https://stackoverflow.com/questions/14784405/how-to-set-the-output-size-in-graphviz-for-the-dot-format

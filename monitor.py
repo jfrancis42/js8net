@@ -90,6 +90,13 @@ def main_page ():
                     pass
                 with tag('table', id='traffic', klass='styled-table'):
                     pass
+                with tag('br'):
+                    pass
+                with tag('a', href='https://github.com/jfrancis42/js8net', target='_blank'):
+                    text('js8net')
+                text(' by ')
+                with tag('a', href='https://www.qrz.com/db/N0GQ', target='_blank'):
+                    text('N0GQ')
     return(doc.getvalue())
 
 def missing_page ():

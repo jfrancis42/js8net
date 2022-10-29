@@ -203,13 +203,15 @@ def traffic_table():
                     text('Station(s)')
             with tag('th'):
                 text('Received Text')
-    # https://pskreporter.info/pskmap.html?preset&callsign=n0gq&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205
     with traffic_lock:
         for tfc in sorted(traffic,reverse=True,key=lambda n: n['time']):
             if(tfc['type']=='RX.DIRECTED' and tfc['time']>=time.time()-max_age):
                 with tag('tr'):
                     with tag('td', style='text-align:center;padding:6px'):
-                        text(str(uuids[tfc['uuid']]))
+                        if(tfc['uuid'] in uuids):
+                            text(str(uuids[tfc['uuid']]))
+                        else:
+                            text('unknown')
                     with tag('td', style='text-align:center;padding:6px'):
                         if('FROM' in tfc['params']):
                             with tag('a', href='https://pskreporter.info/pskmap.html?preset&callsign='+
@@ -288,6 +290,8 @@ def traffic_table():
                                             with tag('td'):
                                                 if(fmcall in calls):
                                                     text(', '.join(calls[fmcall]))
+                                                else:
+                                                    text('unknown')
                                         with tag('tr'):
                                             with tag('td'):
                                                 if(len(tocall)>0):
@@ -301,6 +305,8 @@ def traffic_table():
                                             with tag('td'):
                                                 if(tocall in calls):
                                                     text(', '.join(calls[tocall]))
+                                                else:
+                                                    text('unknown')
                                 else:
                                     text('')
                         with tag('td', style='padding:6px'):

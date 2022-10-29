@@ -37,7 +37,6 @@ def update_thread(name):
     global myspeed
     while(True):
         with station_lock:
-#            print('Fetching updated radio data...')
             mycall=get_callsign()
             mygrid=get_grid()
             myfreq=get_freq()
@@ -75,25 +74,38 @@ def station_thread(name):
     global myfreq
     global version
     print(name+' started...')
-    time.sleep(15)
+    time.sleep(7.5)
+    olddial=False
+    oldcarrier=False
+    oldspeed=False
+    lasttime=0
     while(True):
         with station_lock:
-            j={'time': time.time(),
-               'en_time': time.asctime(),
-               'call': mycall,
-               'grid': mygrid,
-               'host': js8host,
-               'port': js8port,
-               'speed': myspeed,
-               'dial': myfreq['dial'],
-               'carrier': myfreq['offset'],
-               'uuid': myuuid,
-               'version': version}
-            print(j)
-            res=requests.post('http://'+peer+'/station',json={'station':j})
-            print(res)
-            res.close()
-        time.sleep(91)
+            now=time.time()
+            if(olddial!=myfreq['dial'] or
+               oldcarrier!=myfreq['offset'] or
+               oldspeed!=myspeed or
+               now-lasttime>90):
+                olddial=myfreq['dial']
+                oldcarrier=myfreq['offset']
+                oldspeed=myspeed
+                lasttime=now
+                j={'time': now,
+                   'en_time': time.asctime(),
+                   'call': mycall,
+                   'grid': mygrid,
+                   'host': js8host,
+                   'port': js8port,
+                   'speed': myspeed,
+                   'dial': myfreq['dial'],
+                   'carrier': myfreq['offset'],
+                   'uuid': myuuid,
+                   'version': version}
+                print(j)
+                res=requests.post('http://'+peer+'/station',json={'station':j})
+                print(res)
+                res.close()
+        time.sleep(1)
                         
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

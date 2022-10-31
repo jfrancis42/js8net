@@ -22,7 +22,7 @@ global mygrid
 global myfreq
 global myspeed
 global myuuid
-
+global radio
 global peer
 
 global station_lock
@@ -72,6 +72,7 @@ def station_thread(name):
     global js8port
     global myspeed
     global myfreq
+    global radio
     global version
     print(name+' started...')
     time.sleep(7.5)
@@ -100,6 +101,7 @@ def station_thread(name):
                    'dial': myfreq['dial'],
                    'carrier': myfreq['offset'],
                    'uuid': myuuid,
+                   'radio': radio,
                    'version': version}
                 print(j)
                 res=requests.post('http://'+peer+'/station',json={'station':j})
@@ -116,6 +118,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--js8_port',default=False,help='TCP port of JS8Call server (default 2442)')
     parser.add_argument('--peer',default=False,help='Peer to send traffic to (default is localhost:8001)')
     parser.add_argument('--uuid',default=False,help='Use a specific UUID (default is auto-generate)')
+    parser.add_argument('--radio',default=False,help='Type/model of radio (for display only)')
     args=parser.parse_args()
 
     js8host=False
@@ -140,6 +143,11 @@ if(__name__ == '__main__'):
         peer=args.peer
     else:
         peer='localhost:8001'
+
+    if(args.radio):
+        radio=args.radio
+    else:
+        radio='unknown'
 
     if(args.uuid):
         myuuid=args.uuid

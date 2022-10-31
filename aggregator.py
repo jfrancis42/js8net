@@ -124,6 +124,7 @@ if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description='Send JS8Call info.')
     parser.add_argument('--listen',default=False,help='Listen to peer traffic (default 8001)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
+    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)')
     args=parser.parse_args()
 
     if(args.listen):
@@ -137,6 +138,11 @@ if(__name__ == '__main__'):
     else:
         max_age=3600
     print('Max age: '+str(max_age))
+
+    if(args.localhost):
+        localhost=True
+    else:
+        localhost=False
 
     if(exists('/tmp/xtraffic.json')):
         with traffic_lock:
@@ -153,7 +159,10 @@ if(__name__ == '__main__'):
     thread0=Thread(target=housekeeping_thread,args=('Housekeeping Thread',),daemon=True)
     thread0.start()
     
-    httpd=HTTPServer(('0.0.0.0', listen), SimpleHTTPRequestHandler)
+    if(localhost):
+        httpd=HTTPServer(('127.0.0.1', listen), SimpleHTTPRequestHandler)
+    else:
+        httpd=HTTPServer(('0.0.0.0', listen), SimpleHTTPRequestHandler)
     httpd.serve_forever()
 #    pdb.set_trace()
 

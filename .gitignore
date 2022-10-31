@@ -11,3 +11,5 @@ test.py
 EN.dat
 traffic.*
 old/*
+sync.sh
+reverse_sync.sh

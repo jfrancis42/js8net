@@ -10,12 +10,13 @@ import sys
 import time
 import json
 import argparse
+import datetime
 from os.path import exists
 from js8net import *
 #import pdb
 import csv
 import requests
-
+import maidenhead as mh
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
@@ -71,6 +72,11 @@ def main_page ():
                 text('    font-weight: bold;')
                 text('    color: #009879;')
                 text('}')
+                text('a {')
+                text('  color: black;')
+                text('  text-decoration: none;')
+                text('  text-transform: uppercase;')
+                text('}')
         with tag('body'):
             with tag('script', type='text/javascript'):
                 text('\nvar intervalId = setInterval(function() {\n')
@@ -84,10 +90,14 @@ def main_page ():
                 text('  }\n')
                 text('}, '+str(refresh*1000)+');\n')
             with tag('div', id='wrapper'):
+                with tag('h1'):
+                    text('Stations')
                 with tag('table', id='stations', klass='styled-table'):
                     pass
                 with tag('br'):
                     pass
+                with tag('h1'):
+                    text('Traffic')
                 with tag('table', id='traffic', klass='styled-table'):
                     pass
                 with tag('br'):
@@ -131,6 +141,8 @@ def stations_table ():
                 text('Dial')
             with tag('th'):
                 text('Carrier')
+            with tag('th'):
+                text('Radio')
 #            with tag('th'):
 #                text('Grid')
 #            with tag('th'):
@@ -154,6 +166,11 @@ def stations_table ():
                     text(str(stations[u]['dial']/1000.0)+' khz')
                 with tag('td', style='text-align:center;padding:6px'):
                     text(str(stations[u]['carrier'])+' hz')
+                with tag('td', style='text-align:center;padding:6px'):
+                    if('radio' in stations[u]):
+                        text(stations[u]['radio'])
+                    else:
+                        text('unknown')
 #                with tag('td', style='text-align:center;padding:6px'):
 #                    with tag('form', action='/', method='post'):
 #                        with tag('input', type='hidden', value='true', name='send-grid'):
@@ -179,6 +196,8 @@ def traffic_table():
     global mycall
     global uuids
     global max_age
+    lat=False
+    lon=False
     doc, tag, text=Doc().tagtext()
     with tag('thead'):
         with tag('tr'):
@@ -200,7 +219,7 @@ def traffic_table():
                 text('Freq')
             if(len(calls)>0):
                 with tag('th'):
-                    text('Station(s)')
+                    text('Stations - (Click for qrz.com)')
             with tag('th'):
                 text('Received Text')
     with traffic_lock:
@@ -245,11 +264,15 @@ def traffic_table():
                         if('GRID' in tfc['params']):
                             with tag('td', style='text-align:center'):
                                 text(tfc['params']['GRID'])
+#                                (lat,lon)=mh.to_location(tfc['params']['GRID'])
                         else:
                             text('')
+                            lat=False
+                            lon=False
                         with tag('td', style='text-align:center'):
                             if('time' in tfc):
-                                text(str(int(time.time()-tfc['time']))+' sec')
+#                                text(str(int(time.time()-tfc['time']))+' sec')
+                                text(str(datetime.timedelta(seconds=int(time.time()-tfc['time']))))
                             else:
                                 text('')
                         if('SNR' in  tfc['params']):
@@ -403,6 +426,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--web_port',default=False,help='TCP port of for the web server (default 8000)')
     parser.add_argument('--refresh',default=False,help='Web page refresh time in seconds (default 3.0)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 1800 seconds)')
+    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)')
     args=parser.parse_args()
 
     traffic_lock=threading.Lock()
@@ -420,6 +444,11 @@ if(__name__ == '__main__'):
         aggregator=args.aggregator
     else:
         aggregator='localhost:8001'
+
+    if(args.localhost):
+        localhost=True
+    else:
+        localhost=False
 
     if(args.web_port):
         webport=int(args.web_port)
@@ -442,11 +471,11 @@ if(__name__ == '__main__'):
     thread1=Thread(target=graph_thread,args=('Graph Thread',),daemon=True)
     thread1.start()
 
-    httpd=HTTPServer(('0.0.0.0', webport), SimpleHTTPRequestHandler)
+    if(localhost):
+        httpd=HTTPServer(('127.0.0.1', webport), SimpleHTTPRequestHandler)
+    else:
+        httpd=HTTPServer(('0.0.0.0', webport), SimpleHTTPRequestHandler)
     httpd.serve_forever()
 #    pdb.set_trace()
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-# if(type(stations[u]['carrier']).__name__ =='str'):
-# https://stackoverflow.com/questions/14784405/how-to-set-the-output-size-in-graphviz-for-the-dot-format

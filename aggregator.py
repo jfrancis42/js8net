@@ -18,6 +18,7 @@ from os.path import exists
 import threading
 from threading import Thread
 from yattag import Doc
+import maidenhead as mh
 
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -33,6 +34,13 @@ global stations
 global stations_lock
 stations={}
 stations_lock=threading.Lock()
+global grids
+grids={}
+
+global eom
+global error
+eom="♢"
+error="…"
 
 def main_page ():
     doc, tag, text=Doc().tagtext()
@@ -71,6 +79,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global stations
         global stations_lock
         global listen
+        global error
         content_length=int(self.headers['Content-Length'])
         payload=self.rfile.read(content_length).decode('utf8')
         j=json.loads(payload)
@@ -82,6 +91,25 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 if('uuid' in j['traffic']):
                     print('Traffic from '+j['traffic']['uuid'])
                     rx=j['traffic']
+                    if('FROM' in rx['params'] and 'GRID' in rx['params']): # don't sub a less accurate grid
+                        if(rx['params']['GRID']!=''):
+                            if(rx['params']['FROM'] in grids):
+                                if(rx['params']['GRID'] in grids):
+                                    pass
+                                else:
+                                    grids[rx['params']['FROM']]=rx['params']['GRID']
+                            else:
+                                grids[rx['params']['FROM']]=rx['params']['GRID']
+                        elif(rx['params']['FROM'] in grids):
+                            rx['params']['GRID']=grids[rx['params']['FROM']]
+                    if('FROM' in rx['params'] and 'TEXT' in rx['params']):
+                        tmp=rx['params']['TEXT'].split()
+                        if(len(tmp)>3):
+                            if(tmp[2]=='GRID'):
+                                if(error in tmp[3]):
+                                    pass
+                                else:
+                                    grids[rx['params']['FROM']]=tmp[3]
                     with traffic_lock:
                         traffic.append(rx)
         if(self.path=='/station'):
@@ -91,6 +119,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 if('uuid' in j['station']):
                     print('Station info from '+j['station']['uuid'])
                     with stations_lock:
+                        if('grid' in j['station']):
+                            if(j['station']['grid']!=''):
+                                if(len(j['station']['grid'])>8):
+                                    (lat,lon)=mh.to_location(j['station']['grid'][0:8])
+                                else:
+                                    (lat,lon)=mh.to_location(j['station']['grid'])
+                                j['station']['lat']=lat
+                                j['station']['lon']=lon
                         stations[j['station']['uuid']]=j['station']
 
 def housekeeping_thread(name):

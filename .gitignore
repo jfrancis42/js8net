@@ -9,7 +9,11 @@ tests/*
 test.py
 *~
 EN.dat
-traffic.*
+traffic.dot
+traffic.jpg
 old/*
 sync.sh
 reverse_sync.sh
+inject.sh
+start_ic7300.sh
+start_sunsdr2.sh

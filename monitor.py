@@ -13,6 +13,7 @@ import argparse
 import datetime
 from os.path import exists
 from js8net import *
+import pyproj
 #import pdb
 import csv
 import requests
@@ -36,8 +37,33 @@ global max_age
 global aggregator
 global webport
 
+global color_mycall
+global color_at
+global color_snr_green
+global color_snr_yellow
+global color_snr_red
+global color_heartbeat
+global color_query
+global color_table_header_background
+global color_table_header_text
+global color_link
+
+color_mycall='#2ECC71'
+color_at='#5DADE2'
+color_snr_green='#7CD342'
+color_snr_yellow='#FDD835'
+color_snr_red='#F4511E'
+color_heartbeat='#FADBD8'
+color_query='#D6EAF8'
+color_table_header_background='#689F38'
+color_table_header_text='#FFFFFF'
+color_link='#000000'
+
 def main_page ():
     global refresh
+    global color_table_header_background
+    global color_table_header_text
+    global color_link
     doc, tag, text=Doc().tagtext()
     with tag('html', lang='en'):
         with tag('head'):
@@ -48,11 +74,11 @@ def main_page ():
                 text('    font-size: 0.9em;')
                 text('    font-family: sans-serif;')
                 text('    min-width: 400px;')
-                text('    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);')
+                text('    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);')
                 text('}')
                 text('.styled-table thead tr {')
-                text('    background-color: #689F38;')
-                text('    color: #ffffff;')
+                text('    background-color: '+color_table_header_background+';')
+                text('    color: '+color_table_header_text+';')
                 text('    text-align: left;')
                 text('}')
                 text('.styled-table th,')
@@ -68,12 +94,12 @@ def main_page ():
                 text('.styled-table tbody tr:last-of-type {')
                 text('    border-bottom: 2px solid #009879;')
                 text('}')
-                text('.styled-table tbody tr.active-row {')
-                text('    font-weight: bold;')
-                text('    color: #009879;')
-                text('}')
+#                text('.styled-table tbody tr.active-row {')
+#                text('    font-weight: bold;')
+#                text('    color: #009879;')
+#                text('}')
                 text('a {')
-                text('  color: black;')
+                text('  color: '+color_link+';')
                 text('  text-decoration: none;')
                 text('  text-transform: uppercase;')
                 text('}')
@@ -89,11 +115,21 @@ def main_page ():
                 text('    document.getElementById(\"stations\").innerHTML = obj.stations;\n')
                 text('  }\n')
                 text('}, '+str(refresh*1000)+');\n')
+                text('function myFunction() {')
+                text('  var x = document.getElementById("stations");')
+                text('  if (x.style.display === "none") {')
+                text('    x.style.display = "block";')
+                text('  } else {')
+                text('    x.style.display = "none";')
+                text('  }')
+                text('}')
             with tag('div', id='wrapper'):
                 with tag('h1'):
                     text('Stations')
                 with tag('table', id='stations', klass='styled-table'):
                     pass
+                with tag('button', onclick='myFunction()'):
+                    text('Show/Hide Stations')
                 with tag('br'):
                     pass
                 with tag('h1'):
@@ -196,8 +232,16 @@ def traffic_table():
     global mycall
     global uuids
     global max_age
+    global color_mycall
+    global color_at
+    global color_snr_green
+    global color_snr_yellow
+    global color_snr_red
+    global color_heartbeat
+    global color_query
     lat=False
     lon=False
+    geodesic=pyproj.Geod(ellps='WGS84')
     doc, tag, text=Doc().tagtext()
     with tag('thead'):
         with tag('tr'):
@@ -209,6 +253,8 @@ def traffic_table():
                 text('Destination')
             with tag('th'):
                 text('Grid')
+            with tag('th'):
+                text('Dist')
             with tag('th'):
                 text('Age')
             with tag('th'):
@@ -242,14 +288,14 @@ def traffic_table():
                             text('')
                         if('TO' in tfc['params']):
                             if(tfc['params']['TO']==mycall):
-                                with tag('td', style='text-align:center;background-color:#2ECC71'):
+                                with tag('td', style='text-align:center;background-color:'+color_mycall):
                                     with tag('a', href='https://pskreporter.info/pskmap.html?preset&callsign='+
                                              (tfc['params']['TO'].split('/'))[0]+
                                              '&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205',
                                              target='_blank'):
                                         text(tfc['params']['TO'])
                             elif(tfc['params']['TO'][0]=='@'):
-                                with tag('td', style='text-align:center;background-color:#3498DB'):
+                                with tag('td', style='text-align:center;background-color:'+color_at):
                                     text(tfc['params']['TO'])
                             else:
                                 with tag('td', style='text-align:center'):
@@ -264,25 +310,41 @@ def traffic_table():
                         if('GRID' in tfc['params']):
                             with tag('td', style='text-align:center'):
                                 text(tfc['params']['GRID'])
-#                                (lat,lon)=mh.to_location(tfc['params']['GRID'])
                         else:
                             text('')
-                            lat=False
-                            lon=False
+                        with tag('td', style='text-align:center'):
+                            if('lat' in stations[tfc['uuid']] and
+                               'lon' in stations[tfc['uuid']] and
+                               tfc['params']['GRID']!=''):
+                                if(len(tfc['params']['GRID'])>8):
+                                    (lat,lon)=mh.to_location(tfc['params']['GRID'][0:8])
+                                else:
+                                    (lat,lon)=mh.to_location(tfc['params']['GRID'])
+                                (fwd_azimuth,back_azimuth,distance)=geodesic.inv(stations[tfc['uuid']]['lon'],
+                                                                                 stations[tfc['uuid']]['lat'],
+                                                                                 lon,lat)
+                                text(str(round(distance/1000*0.6214))+' mi')
+                                with tag('br'):
+                                    pass
+                                if(fwd_azimuth<0):
+                                    text(str(round(fwd_azimuth+360))+' deg')
+                                else:
+                                    text(str(round(fwd_azimuth))+' deg')
+                            else:
+                                text('')
                         with tag('td', style='text-align:center'):
                             if('time' in tfc):
-#                                text(str(int(time.time()-tfc['time']))+' sec')
                                 text(str(datetime.timedelta(seconds=int(time.time()-tfc['time']))))
                             else:
                                 text('')
                         if('SNR' in  tfc['params']):
                             snr=tfc['params']['SNR']
                             if(snr>=-10):
-                                s='text-align:center;background-color:#7CD342'
+                                s='text-align:center;background-color:'+color_snr_green
                             elif(snr<-10 and snr>=-17):
-                                s='text-align:center;background-color:#FDD835'
+                                s='text-align:center;background-color:'+color_snr_yellow
                             elif(snr<-17):
-                                s='text-align:center;background-color:#F4511E'
+                                s='text-align:center;background-color:'+color_snr_red
                         else:
                             s='text-align:center'
                         with tag('td', style=s):
@@ -332,7 +394,25 @@ def traffic_table():
                                                     text('unknown')
                                 else:
                                     text('')
-                        with tag('td', style='padding:6px'):
+                        c='#FFFFFF'
+                        if('TO' in tfc['params']):
+                            if(len(tfc['params']['TO'])==3):
+                                if(tfc['params']['TO']=='@HB'):
+                                    c=color_heartbeat
+                            if('TEXT' in tfc['params']):
+                                tmp=tfc['params']['TEXT'].split()
+                                if(len(tmp)>=3):
+                                    if(tmp[2]=='HEARTBEAT'):
+                                        c=color_heartbeat
+                                    if(tmp[2]=='SNR' or tmp[2]=='SNR?' or
+                                       tmp[2]=='INFO' or tmp[2]=='INFO?' or
+                                       tmp[2]=='GRID' or tmp[2]=='GRID?' or
+                                       tmp[2]=='ACK' or tmp[2]=='QUERY'):
+                                        c=color_query
+                        if('TEXT' in tfc['params']):
+                            if('@ALLCALL CQ' in tfc['params']['TEXT']):
+                                c='#FCF3CF' # cq
+                        with tag('td', style='padding:6px;background-color:'+c):
                             if('TEXT' in tfc['params']):
                                 text(tfc['params']['TEXT'])
                             else:

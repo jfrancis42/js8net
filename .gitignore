@@ -15,5 +15,5 @@ old/*
 sync.sh
 reverse_sync.sh
 inject.sh
-start_ic7300.sh
-start_sunsdr2.sh
+start_*.sh
+

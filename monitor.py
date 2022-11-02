@@ -39,6 +39,7 @@ global webport
 
 global color_mycall
 global color_at
+global color_snr_supergreen
 global color_snr_green
 global color_snr_yellow
 global color_snr_red
@@ -50,12 +51,14 @@ global color_link
 
 color_mycall='#2ECC71'
 color_at='#5DADE2'
+color_snr_supergreen='#66FF00'
 color_snr_green='#7CD342'
 color_snr_yellow='#FDD835'
 color_snr_red='#F4511E'
 color_heartbeat='#FADBD8'
 color_query='#D6EAF8'
-color_table_header_background='#689F38'
+#color_table_header_background='#689F38'
+color_table_header_background='#08389F'
 color_table_header_text='#FFFFFF'
 color_link='#000000'
 
@@ -143,6 +146,8 @@ def main_page ():
                 text(' by ')
                 with tag('a', href='https://www.qrz.com/db/N0GQ', target='_blank'):
                     text('N0GQ')
+                with tag('br'):
+                    pass
     return(doc.getvalue())
 
 def missing_page ():
@@ -161,8 +166,8 @@ def stations_table ():
     doc, tag, text=Doc().tagtext()
     with tag('thead'):
         with tag('tr'):
-            with tag('th'):
-                text('TRX')
+#            with tag('th'):
+#                text('TRX')
             with tag('th'):
                 text('Call')
             with tag('th'):
@@ -186,8 +191,8 @@ def stations_table ():
     for u in list(stations.keys()):
         if(stations[u]['time']>=time.time()-max_age):
             with tag('tr'):
-                with tag('td', style='text-align:center;padding:6px'):
-                    text(str(uuids[u]))
+#                with tag('td', style='text-align:center;padding:6px'):
+#                    text(str(uuids[u]))
                 with tag('td', style='text-align:center;padding:6px'):
                     text(stations[u]['call'])
                 with tag('td', style='text-align:center;padding:6px'):
@@ -234,6 +239,7 @@ def traffic_table():
     global max_age
     global color_mycall
     global color_at
+    global color_snr_supergreen
     global color_snr_green
     global color_snr_yellow
     global color_snr_red
@@ -246,7 +252,7 @@ def traffic_table():
     with tag('thead'):
         with tag('tr'):
             with tag('th'):
-                text('TRX')
+                text('Station')
             with tag('th'):
                 text('Call')
             with tag('th'):
@@ -274,7 +280,11 @@ def traffic_table():
                 with tag('tr'):
                     with tag('td', style='text-align:center;padding:6px'):
                         if(tfc['uuid'] in uuids):
-                            text(str(uuids[tfc['uuid']]))
+#                            text(str(uuids[tfc['uuid']]))
+                            text(stations[tfc['uuid']]['call'])
+                            with tag('br'):
+                                pass
+                            text(stations[tfc['uuid']]['radio'])
                         else:
                             text('unknown')
                     with tag('td', style='text-align:center;padding:6px'):
@@ -339,7 +349,9 @@ def traffic_table():
                                 text('')
                         if('SNR' in  tfc['params']):
                             snr=tfc['params']['SNR']
-                            if(snr>=-10):
+                            if(snr>0):
+                                s='text-align:center;background-color:'+color_snr_supergreen
+                            if(snr>=-10 and snr<=0):
                                 s='text-align:center;background-color:'+color_snr_green
                             elif(snr<-10 and snr>=-17):
                                 s='text-align:center;background-color:'+color_snr_yellow

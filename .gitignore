@@ -16,4 +16,6 @@ sync.sh
 reverse_sync.sh
 inject.sh
 start_*.sh
+rx.sh
+tx.sh
 

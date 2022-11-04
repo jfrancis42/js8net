@@ -19,7 +19,7 @@ import threading
 from threading import Thread
 from yattag import Doc
 import maidenhead as mh
-
+from queue import Queue
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -41,6 +41,11 @@ global eom
 global error
 eom="♢"
 error="…"
+
+global commands
+global commands_lock
+commands={}
+commands_lock=threading.Lock()
 
 def main_page ():
     doc, tag, text=Doc().tagtext()
@@ -80,10 +85,17 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global stations_lock
         global listen
         global error
+        global commands
         content_length=int(self.headers['Content-Length'])
         payload=self.rfile.read(content_length).decode('utf8')
         j=json.loads(payload)
         print('payload: '+payload)
+        if(self.path=='/cmd'):
+            with commands_lock:
+                self.send_response(200)
+                self.end_headers()
+                print(commands.keys())
+                commands[j['uuid']].put(j)
         if(self.path=='/traffic'):
             self.send_response(200)
             self.end_headers()
@@ -114,10 +126,16 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         traffic.append(rx)
         if(self.path=='/station'):
             self.send_response(200)
+            self.send_header('Content-type','application/json')
             self.end_headers()
             if('station' in j):
                 if('uuid' in j['station']):
                     print('Station info from '+j['station']['uuid'])
+                    with commands_lock:
+                        if(j['station']['uuid'] in commands):
+                            pass
+                        else:
+                            commands[j['station']['uuid']]=Queue()
                     with stations_lock:
                         if('grid' in j['station']):
                             if(j['station']['grid']!=''):
@@ -128,6 +146,24 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                                 j['station']['lat']=lat
                                 j['station']['lon']=lon
                         stations[j['station']['uuid']]=j['station']
+            flag=False
+            with commands_lock:
+                print('-=-=-=-=-=-=-=-=-')
+                for k in commands.keys():
+                    print(k)
+                    print(list(commands[k].queue))
+                print('-=-=-=-=-=-=-=-=-')
+                if(commands[j['station']['uuid']].empty()):
+                    pass
+                else:
+                    msg=commands[j['station']['uuid']].get()
+                    if('cmd' in msg and 'uuid' in msg):
+                        flag=True
+            if(flag):
+                self.wfile.write(str.encode(json.dumps(msg)))
+            else:
+                print('Sending null command...')
+                self.wfile.write(str.encode(json.dumps({'cmd':False})))
 
 def housekeeping_thread(name):
     global traffic
@@ -135,6 +171,8 @@ def housekeeping_thread(name):
     global stations
     global stations_lock
     global max_age
+    global commands
+    global commands_lock
     while(True):
         time.sleep(31)
         now=time.time()
@@ -157,10 +195,12 @@ def housekeeping_thread(name):
 
 # Main program.
 if(__name__ == '__main__'):
-    parser=argparse.ArgumentParser(description='Send JS8Call info.')
-    parser.add_argument('--listen',default=False,help='Listen to peer traffic (default 8001)')
+    parser=argparse.ArgumentParser(description='Aggregate collected JS8call data from collectors.')
+    parser.add_argument('--listen',default=False,help='Listen port for collector traffic (default 8001)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
-    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)')
+    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)',
+                        action='store_true')
+
     args=parser.parse_args()
 
     if(args.listen):

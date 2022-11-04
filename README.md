@@ -2,8 +2,6 @@
 
 #### _Jeff Francis <jeff@gritch.org>_, N0GQ
 
-
-
 ## The Library
 
 js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion. Likewise, it's intended to run on "unix-like" operating systems (OSX, Linux, and the various BSD flavors). It *might* work on Windows. It might not. The code has not been written to excluded Windows, but I have no simple way to test it. The generated web pages (see the bottom of this document) should be viewable on any modern Chromium-based browser and Firefox. I have not tested them on IE or Safari.
@@ -312,8 +310,14 @@ brew install graphviz
 ### Collector
 collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to an aggregator. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the aggregator) may be pointed at a single aggregator. If the collector operator specifies their call sign, that data will be flagged within the aggregator for visible highlighting, etc.
 
+If you run the collector with the --transmit option, the collector will accept requests from the UI (assuming it's also run with the --transmit option) to transmit data over the radio. If this flag is not specified, the radio will be receive-only, no matter what mode the UI is set to.
+
 ### Monitor
 monitor.py talks to an aggregator on TCP 8001 and periodically (by default, every three seconds) fetches all available data. That data is then made available as a web page on TCP 8000 that can be viewed on any web browser (including phones and tablets). As with the aggregator, this port may be exposed to the Internet, though care should be taken, as future features may allow any user of the web page to send their own data via HF (though there will be options to disable transmissions). Expose to the Internet at your own risk. It's really intended for internal (LAN) use, not public-facing. As with the aggregator, the port number may be changed, if desired. If you want to run it on port 80, you'll either have to run it as root (a very very very bad idea that you shouldn't even consider), or front-end it with something like nginx or port forwarding/translation in your router/firewall. There are hundreds of tutorials for both methods on the web; this is left as an exercise for the reader.
+
+If you wish to be able to initiate transmissions from the UI, you must specify the --transmit option when running the monitor, as well as specifying the --transmit option when running the collectors for any radios you want to be able to transmit from. If --transmit is not specified when running the monitor, no transmit options will be visible. If --transmit is specified, transmit options will only be visible for radios whose collectors were also run with the --transmit option.
+
+Note that allowing transmissions from the open Internet is an exceptionally bad idea. This option is only intended to be used when the web interface is available in a restricted network environment.
 
 ### Web Interface
 

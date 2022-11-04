@@ -30,6 +30,7 @@ tx_lock=threading.Lock()
 rx_queue=Queue()
 rx_lock=threading.Lock()
 spots_lock=threading.Lock()
+unique_lock=threading.Lock()
 
 # These globals represent the state of JS8Call.
 global spots
@@ -434,15 +435,33 @@ def send_heartbeat(grid=False):
 
 def send_sms(phone,message):
     # Send an SMS message via JS8.
+    global unique
+    global unique_lock
     with unique_lock:
         unique=unique+1
-        send_message("@APRSIS CMD :SMSGTE  :@"+phone+" "+message+"{%03d}" % unique)
+        if(unique>99):
+            unique=1
+        send_message("@APRSIS CMD :SMSGTE   :@"+phone+" "+message+"{%02d}" % unique)
 
 def send_email(address,message):
     # Send an email message via JS8.
+    global unique
+    global unique_lock
     with unique_lock:
         unique=unique+1
-        send_message("@APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%03d}" % unique)
+        if(unique>99):
+            unique=1
+        send_message("@APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%02d}" % unique)
+
+def send_aprs(call,message):
+    # Send an APRS message via JS8.
+    global unique
+    global unique_lock
+    with unique_lock:
+        unique=unique+1
+        if(unique>99):
+            unique=1
+        send_message("@APRSIS CMD :"+call+" :"+message+"{%02d}" % unique)
 
 def send_pota(park,freq,mode,comment):
     # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300).

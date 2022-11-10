@@ -280,52 +280,25 @@ There are several scripts bundled with the library that show how to do various t
 
 ## Distributed Data Collection and Web Interface
 
-It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time.
+NOTE: THIS PART OF THE CODE IS PRE-ALPHA. It has some bugs and limitations. While it does basically work, it may or may not have security vulnerabilities that would make exposing it to the open internet a bad idea.
 
-### Aggregator
-aggregator.py is the heart of the system. The aggregator receives JS8Call data from the collectors, processes it and stores it, then makes it available via a REST-ish interface as JSON data for consumers (such as the monitor, below). This data can also be consumed by your own API scripts. The purpose of the aggregator is to accept data from as many collectors (tied to as many radios) as you wish. These might be your own radios, or those of a group working together. The aggregator listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN. The same port is also used for extracting the collected data for display or analysis.
+There are basically two pieces to the web monitor: the monitor (monitor.py), which absorb and process the data from the collectors, and serve up a web page, as well as collected JSON data to the end user's web browser. The collector (collector.py) talks to the JS8Call instance via the API and passes that data to the monitor. Any number of collectors may be run (ie, one for each radio you have running JS8Call).
 
-In order to run these scripts, you'll need to install the yattag python library and the graphviz software package (the web interface generates connectivity graphs of all the observed stations, though the web interface does not yet actually display these images - it's on the to-do list).
-
-To install the python library, run one of these (depending on where you want the libraries installed):
-```
-pip3 install yattag
-```
-```
-sudo pip3 install yattag
-```
-
-Installing graphviz will vary across operating systems, but should generally be something similar to the following:
-
-```
-sudo apt install graphviz
-```
-```
-sudo yum install graphviz
-```
-```
-brew install graphviz
-```
-
-### Collector
-collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to an aggregator. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the aggregator) may be pointed at a single aggregator. If the collector operator specifies their call sign, that data will be flagged within the aggregator for visible highlighting, etc.
-
-If you run the collector with the --transmit option, the collector will accept requests from the UI (assuming it's also run with the --transmit option) to transmit data over the radio. If this flag is not specified, the radio will be receive-only, no matter what mode the UI is set to.
+Note that the web server in this alpha version of the code is not designed to handle a large number of users. It's intended for experimental purposes. Later versions will have a properly threaded server that can handle a more substantial load.
 
 ### Monitor
-monitor.py talks to an aggregator on TCP 8001 and periodically (by default, every three seconds) fetches all available data. That data is then made available as a web page on TCP 8000 that can be viewed on any web browser (including phones and tablets). As with the aggregator, this port may be exposed to the Internet, though care should be taken, as future features may allow any user of the web page to send their own data via HF (though there will be options to disable transmissions). Expose to the Internet at your own risk. It's really intended for internal (LAN) use, not public-facing. As with the aggregator, the port number may be changed, if desired. If you want to run it on port 80, you'll either have to run it as root (a very very very bad idea that you shouldn't even consider), or front-end it with something like nginx or port forwarding/translation in your router/firewall. There are hundreds of tutorials for both methods on the web; this is left as an exercise for the reader.
+monitor.py listens on TCP port 8000 for both collector data, as well as web browsers. There are command line options (do "--help") to force the browser to only listen on the localhost interface (ie, everything, including the web browser, has to run on the same machine - this is not very flexible, but is very secure), to determine how long data is kept before it expires (default is an hour), and what port to listen on (default TCP 8000). Note that it is NOT wise to try to run this code on port 80 as root. Running a process such as this as root introduces all sorts of nasty security vulnerabilities. It is much better to run it as a normal user on TCP 8000, then front-end it with something like nginx. The nginx configuration to do this is trivial, and much more secure. Or if you don't feel like nginx, you can do it with a couple of IPTables rules to translate incoming port 80 traffic to port 8000. Either is better than running as root.
 
-If you wish to be able to initiate transmissions from the UI, you must specify the --transmit option when running the monitor, as well as specifying the --transmit option when running the collectors for any radios you want to be able to transmit from. If --transmit is not specified when running the monitor, no transmit options will be visible. If --transmit is specified, transmit options will only be visible for radios whose collectors were also run with the --transmit option.
-
-Note that allowing transmissions from the open Internet is an exceptionally bad idea. This option is only intended to be used when the web interface is available in a restricted network environment.
+### Collector
+collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to the monitor. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8000, but command-line flags (again, --help is your friend) allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the monitor) may be pointed at a single monitor.
 
 ### Web Interface
 
 The first table includes the current list of collectors, one for each instance of JS8Call.
 
-The second table includes all traffic seen for the last thirty minutes (this timeout can be changed with command-line flags). If you click on a call sign in the first two columns, a new window/tab will open on pskreporter.info showing all traffic to/from that callsign. If you've installed the FCC callsign file (see below), there will be an extra "Calls" field showing info on the two call signs involved in each transmission. Clicking on one of these calls will take you to that ham's QRZ.com page (assuming you're logged into qrz).
+The second table includes all traffic seen for the last thirty minutes (this timeout can be changed with command-line flags). If you click on a call sign in the first two columns, a new window/tab will open on pskreporter.info showing all traffic to/from that callsign. If you've installed the FCC callsign file (see below), there will be an extra "Calls" data showing info on the two call signs involved in each transmission.
 
-To have call owner information available, you'll need to download the FCC database and copy the EN.dat file into the directory you run the monitor.py process from. This file is updated daily (though there's no need for you to fetch this file daily) and can be downloaded from:
+To have this extra FCC information available, you'll need to download the FCC database and copy the EN.dat file into the directory you run the monitor.py process from. This file is updated daily (though there's no need for you to fetch this file daily) and can be downloaded from:
 ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
 
 At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for non-USA call info. For now, the web interface is somewhat USA-centric.

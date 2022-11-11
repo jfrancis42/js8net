@@ -360,6 +360,12 @@ var intervalId=setInterval(async function() {
 		} else if(rx.to_call=='@JS8CHESS') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='chess.svg';
+		} else if(rx.to_call=='@APRSIS' && tmp[3]==':SMSGTE') {
+		    cell.style.backgroundColor=colors.color_cq;
+		    img='sms.svg';
+		} else if(rx.to_call=='@APRSIS' && tmp[3]==':EMAIL-2') {
+		    cell.style.backgroundColor=colors.color_cq;
+		    img='mail.svg';
 		} else if(rx.to_call=='@APRSIS' || tmp[2]=='GRID' || tmp[2]=='GRID?') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='gps.svg';

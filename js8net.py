@@ -11,8 +11,12 @@ from threading import Thread
 from queue import Queue
 
 # Defaults within JS8Call.
+global eom
+global error
+global timeout
 eom="♢"
 error="…"
+timeout=1.0
 
 # These are our global objects (and locks for them).
 global tx_queue
@@ -367,11 +371,15 @@ def get_freq():
     global dial
     global freq
     global offset
+    global timeout
     dial=False
     freq=False
     offset=False
     queue_message({"params":{},"type":"RIG.GET_FREQ","value":""})
+    now=time.time()
     while(not(dial) or not(freq) or not(offset)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return({"dial":dial,"freq":freq,"offset":offset})
 
@@ -386,8 +394,12 @@ def get_messages():
     # Fetch all inbox messages.
     queue_message({"params":{},"type":"INBOX.GET_MESSAGES","value":""})
     global messages
+    global timeout
     messages=False
+    now=time.time()
     while(not(messages)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(messages)
 
@@ -400,18 +412,26 @@ def store_message(callsign,text):
 def get_callsign():
     # Ask JS8Call for the configured callsign.
     global call
+    global timeout
     call=False
     queue_message({"params":{},"type":"STATION.GET_CALLSIGN","value":""})
+    now=time.time()
     while(not(call)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(call)
 
 def get_grid():
     # Ask JS8Call for the configured grid square.
     global grid
+    global timeout
     grid=False
     queue_message({'params':{},'type':'STATION.GET_GRID','value':''})
+    now=time.time()
     while(not(grid)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(grid)
 
@@ -471,9 +491,13 @@ def send_pota(park,freq,mode,comment):
 def get_info():
     # Ask JS8Call for the configured info field.
     global info
+    global timeout
     info=False
     queue_message({"params":{},"type":"STATION.GET_INFO","value":""})
+    now=time.time()
     while(not(info)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(info)
 
@@ -500,18 +524,26 @@ def get_band_activity():
 def get_rx_text():
     # Get the contents of the yellow window.
     global rx_text
+    global timeout
     rx_text='-=-=-=-shibboleeth-=-=-=-'
     queue_message({"params":{},"type":"RX.GET_TEXT","value":""})
+    now=time.time()
     while(rx_text=='-=-=-=-shibboleeth-=-=-=-'):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(rx_text)
     
 def get_tx_text():
     # Get the contents of the box below yellow window.
     global tx_text
+    global timeout
     tx_text='-=-=-=-shibboleeth-=-=-=-'
     queue_message({"params":{},"type":"TX.GET_TEXT","value":""})
+    now=time.time()
     while(tx_text=='-=-=-=-shibboleeth-=-=-=-'):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(tx_text)
 
@@ -525,9 +557,13 @@ def get_speed():
     # Ask JS8Call what speed it's currently configured for.
     # slow==4, normal==0, fast==1, turbo==2
     global speed
+    global timeout
     speed=False
     queue_message({"params":{},"type":"MODE.GET_SPEED","value":""})
+    now=time.time()
     while(not(speed)):
+        if(time.time()>now+timeout):
+            return(False)
         time.sleep(0.1)
     return(speed)
     

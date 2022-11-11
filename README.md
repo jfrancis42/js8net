@@ -343,3 +343,4 @@ https://www.country-files.com/category/contest/
 * Station list does not properly expire radios no longer reporting data.
 * My Javascript code does not properly handle exceptions, and does odd GUI things (like print the header over and over) when there are certain JSON/network failures.
 * Table headers aren't quite right, do not properly reflect CSS intent.
+* Collector process does not gracefully reconnect after network problem talking to monitor.

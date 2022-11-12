@@ -149,6 +149,7 @@ var intervalId=setInterval(async function() {
 	    var age=Math.round(utcSecondsSinceEpoch-stations[key].time-25200);
 	    // todo: this shouldn't be a fixed time
 	    if(age<=3600) {
+		console.log(stations[key].radio+': '+age+' sec')
 		var new_row=false;
 		if(!row) {
 		    row=table.insertRow(0);
@@ -406,12 +407,21 @@ var intervalId=setInterval(async function() {
 		} else if(rx.to_call=='@APRSIS' || tmp[2]=='GRID' || tmp[2]=='GRID?') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='gps.svg';
+		} else if(rx.to_call=='@SOTA') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='sota.jpg';
+		} else if(rx.to_call=='@POTA') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='pota.jpg';
 		} else if(rx.to_call=='@ARFCOM') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='ar.svg';
 		} else if(rx.to_call=='@AMRRON') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='amrron.jpg';
+		} else if(rx.to_call=='@AHRN') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='ahrn.jpg';
 		} else {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
 		    img='key.svg';

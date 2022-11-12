@@ -310,7 +310,7 @@ brew install graphviz
 ### Collector
 collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to an aggregator. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the aggregator) may be pointed at a single aggregator. If the collector operator specifies their call sign, that data will be flagged within the aggregator for visible highlighting, etc.
 
-If you run the collector with the --transmit option, the collector will accept requests from the UI (assuming it's also run with the --transmit option) to transmit data over the radio. If this flag is not specified, the radio will be receive-only, no matter what mode the UI is set to.
+The collector doesn't make a huge effort to properly handle exceptions at this point. If a thread dies, it simply restarts the thread. Future versions of the code will be smarter, but for now, this dumb behavior gets the job done.
 
 ### Monitor
 monitor.py talks to an aggregator on TCP 8001 and periodically (by default, every three seconds) fetches all available data. That data is then made available as a web page on TCP 8000 that can be viewed on any web browser (including phones and tablets). As with the aggregator, this port may be exposed to the Internet, though care should be taken, as future features may allow any user of the web page to send their own data via HF (though there will be options to disable transmissions). Expose to the Internet at your own risk. It's really intended for internal (LAN) use, not public-facing. As with the aggregator, the port number may be changed, if desired. If you want to run it on port 80, you'll either have to run it as root (a very very very bad idea that you shouldn't even consider), or front-end it with something like nginx or port forwarding/translation in your router/firewall. There are hundreds of tutorials for both methods on the web; this is left as an exercise for the reader.
@@ -343,4 +343,3 @@ https://www.country-files.com/category/contest/
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
 * Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
-* collector should automatically re-connect to monitor when there's a network problem.

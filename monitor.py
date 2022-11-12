@@ -500,6 +500,27 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             with open('images/amrron.jpg','r') as file:
                 img=file.read()
             self.wfile.write(str.encode(img))
+        elif(self.path=='/sota.jpg'):
+            self.send_response(200)
+            self.send_header('Content-type', 'image/jpeg')
+            self.end_headers()
+            with open('images/sota.jpg','r') as file:
+                img=file.read()
+            self.wfile.write(str.encode(img))
+        elif(self.path=='/pota.jpg'):
+            self.send_response(200)
+            self.send_header('Content-type', 'image/jpeg')
+            self.end_headers()
+            with open('images/pota.jpg','r') as file:
+                img=file.read()
+            self.wfile.write(str.encode(img))
+        elif(self.path=='/ahrn.jpg'):
+            self.send_response(200)
+            self.send_header('Content-type', 'image/jpeg')
+            self.end_headers()
+            with open('images/ahrn.jpg','r') as file:
+                img=file.read()
+            self.wfile.write(str.encode(img))
         elif(self.path=='/key.svg'):
             self.send_response(200)
             self.send_header('Content-type', 'image/svg+xml')

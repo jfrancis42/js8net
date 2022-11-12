@@ -101,11 +101,14 @@ def station_thread(name):
                'radio': radio,
                'tx':tx_allowed,
                'version': version}
+            print('-----------------------------------')
             print(j)
             res=requests.post('http://'+aggregator+'/station',json={'station':j})
+            print('sending station')
             print(res)
             j=res.json()
             print(j)
+            print('-----------------------------------')
             res.close()
         if('cmd' in j):
             print('Command: '+str(j))
@@ -210,6 +213,21 @@ if(__name__ == '__main__'):
     while(True):
         # TODO: Maybe do some screen update stuff here at some point,
         # but for now, just let the threads roll...
+        if(not(thread0.is_alive())):
+            print('(re-)starting thread0...')
+            thread0.join()
+            thread0=Thread(target=update_thread,args=('Update Thread',),daemon=True)
+            thread0.start()
+        if(not(thread1.is_alive())):
+            print('(re-)starting thread1...')
+            thread1.join()
+            thread1=Thread(target=traffic_thread,args=('Traffic Thread',),daemon=True)
+            thread1.start()
+        if(not(thread2.is_alive())):
+            print('(re-)starting thread2...')
+            thread2.join()
+            thread2=Thread(target=station_thread,args=('Station Thread',),daemon=True)
+            thread2.start()
         time.sleep(1.0)
 
 #    pdb.set_trace()

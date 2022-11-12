@@ -333,14 +333,14 @@ At some point, I anticipate the option of querying one of the many callsign webp
 
 https://www.country-files.com/category/contest/
 
-### Known Issues
+### Known Issues (ie, Bugs)
 
 (in process...)
 
-* Neither the core library nor the GUI properly handle relays. While this is a planned enhancement, relay traffic is exceedingly rare (at least that I can hear), so this is not a major drawback.
-* Does not delete old/expired traffic without a browser reload. Well, sometimes.
-* Station list does not correctly update when station info changes.
-* Station list does not properly expire radios no longer reporting data.
-* My Javascript code does not properly handle exceptions, and does odd GUI things (like print the header over and over) when there are certain JSON/network failures.
-* Table headers aren't quite right, do not properly reflect CSS intent.
-* Collector process does not gracefully reconnect after network problem talking to monitor.
+* Neither the core library nor the GUI properly handle relays.
+* Does not delete old/expired traffic without a browser reload.
+* Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
+* Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
+* Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
+* Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
+* collector should automatically re-connect to monitor when there's a network problem.

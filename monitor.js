@@ -56,40 +56,64 @@ function english_speed(s) {
     }
 }
 
+// https://stackoverflow.com/questions/4967223/delete-a-row-from-a-table-by-id
+function removeRow(id) {
+    var tr = document.getElementById(id);
+    if (tr) {
+	if (tr.nodeName == 'TR') {
+	    var tbl = tr; // Look up the hierarchy for TABLE
+	    while (tbl != document && tbl.nodeName != 'TABLE') {
+		tbl = tbl.parentNode;
+	    }
+	    
+	    if (tbl && tbl.nodeName == 'TABLE') {
+		while (tr.hasChildNodes()) {
+		    tr.removeChild( tr.lastChild );
+		}
+		tr.parentNode.removeChild( tr );
+	    }
+	} else {
+	    alert( 'Specified document element is not a TR. id=' + id );
+	}
+    } else {
+	alert( 'Specified document element is not found. id=' + id );
+    }
+}
+
 var first_time=true;
 
 // Build the table contents page.
 var intervalId=setInterval(async function() {
-    // Figure out when "now" is. todo: this is wrong.
-    const now=new Date();
-    const utcMilllisecondsSinceEpoch=now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-    const utcSecondsSinceEpoch=Math.round(utcMilllisecondsSinceEpoch / 1000);
-
+    // age todo: fix timezone issue. collector is stamping in local
+    // time, not UTC, so we have to fix below with a fixed (nasty)
+    // offset
+    var now=new Date();
+    var utcMilllisecondsSinceEpoch=now.getTime()+(now.getTimezoneOffset()*60*1000);
+    var utcSecondsSinceEpoch=Math.round(utcMilllisecondsSinceEpoch/1000);
+    
     if(first_time) {
-	// Get the station JSON.
-	const color_response=await fetch('/colors');
-	const color_stuff=await color_response.text();
-
+	// Get the color JSON.
+	var color_response=await fetch('/colors');
+	var color_stuff=await color_response.text();
+	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	colors=JSON.parse(color_stuff);
-
+	
 	// Get the station JSON.
-	const station_response=await fetch('/stations');
-	const station_stuff=await station_response.text();
+	var station_response=await fetch('/stations');
+	var station_stuff=await station_response.text();
 	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	stations=JSON.parse(station_stuff);
-    } else if(now%5==0) {
-	console.log('Fetching /stations...')
-	
+    } else if(utcSecondsSinceEpoch%5==0) {
 	// Get the station JSON.
-	const station_response=await fetch('/stations');
-	const station_stuff=await station_response.text();
+	var station_response=await fetch('/stations');
+	var station_stuff=await station_response.text();
 	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	stations=JSON.parse(station_stuff);
     }
-
+    
     if(first_time) {
 	// Find the 'stations' table.
 	var table=document.getElementById('stations');
@@ -97,7 +121,7 @@ var intervalId=setInterval(async function() {
 	// Create the table headers.
 	var thead=document.createElement('thead');
 	table.appendChild(thead);
-
+	
 	thead.appendChild(document.createElement('th')).
 	    appendChild(document.createTextNode('Call'));
 	thead.appendChild(document.createElement('th')).
@@ -115,76 +139,89 @@ var intervalId=setInterval(async function() {
 	thead.appendChild(document.createElement('th')).
 	    appendChild(document.createTextNode('Radio'));
     }
-	
+    
     var table=document.getElementById('stations');
-
+    
     // Insert the radio info.
     for (var key in stations) {
 	if (stations.hasOwnProperty(key)) {
 	    var row=document.getElementById(key);
-	    var new_row=false
-	    if(!row) {
-		row=table.insertRow(0);
-		row.id=key;
-		new_row=true;
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['call'];
+	    var age=Math.round(utcSecondsSinceEpoch-stations[key].time-25200);
+	    // todo: this shouldn't be a fixed time
+	    if(age<=3600) {
+		var new_row=false;
+		if(!row) {
+		    row=table.insertRow(0);
+		    row.id=key;
+		    new_row=true;
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['call'];
+		} else {
+		    row.cells[0].innerHTML=stations[key]['call'];
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['grid'];
+		} else {
+		    row.cells[1].innerHTML=stations[key]['grid'];
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['host'];
+		} else {
+		    row.cells[2].innerHTML=stations[key]['host'];
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['port'];
+		} else {
+		    row.cells[3].innerHTML=stations[key]['port'];
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=english_speed(stations[key]['speed']);
+		} else {
+		    row.cells[4].innerHTML=english_speed(stations[key]['speed']);
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['dial']/1000.0;
+		} else {
+		    row.cells[5].innerHTML=stations[key]['dial']/1000.0;
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['carrier'];
+		} else {
+		    row.cells[6].innerHTML=stations[key]['carrier'];
+		}
+		if(new_row) {
+		    var cell=row.insertCell(-1);
+		    cell.innerHTML=stations[key]['radio'];
+		} else {
+		    row.cells[7].innerHTML=stations[key]['radio'];
+		}
 	    } else {
-		row.cells[0].innerHTML=stations[key]['call'];
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['grid'];
-	    } else {
-		row.cells[1].innerHTML=stations[key]['grid'];
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['host'];
-	    } else {
-		row.cells[2].innerHTML=stations[key]['host'];
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['port'];
-	    } else {
-		row.cells[3].innerHTML=stations[key]['port'];
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=english_speed(stations[key]['speed']);
-	    } else {
-		row.cells[4].innerHTML=english_speed(stations[key]['speed']);
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['dial']/1000.0;
-	    } else {
-		row.cells[5].innerHTML=stations[key]['dial']/1000.0;
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['carrier'];
-	    } else {
-		row.cells[6].innerHTML=stations[key]['carrier'];
-	    }
-	    if(new_row) {
-		var cell=row.insertCell(-1);
-		cell.innerHTML=stations[key]['radio'];
-	    } else {
-		row.cells[7].innerHTML=stations[key]['radio'];
+		if(row) {
+		    removeRow(key);
+		}
 	    }
 	}
     }
     
-    if(now%5==0) {
-	console.log('Fetching /traffic...')
-	
+    if(first_time) {
 	// Get the traffic JSON.
-	const traffic_response=await fetch('/traffic');
-	const traffic_stuff=await traffic_response.text();
+	var traffic_response=await fetch('/traffic');
+	var traffic_stuff=await traffic_response.text();
+	
+	// Convert the text into JSON. todo: shouldn't have to do this.
+	traffic=JSON.parse(traffic_stuff);
+    } else if(utcSecondsSinceEpoch%5==0) {
+	// Get the traffic JSON.
+	var traffic_response=await fetch('/traffic');
+	var traffic_stuff=await traffic_response.text();
 	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	traffic=JSON.parse(traffic_stuff);
@@ -302,12 +339,12 @@ var intervalId=setInterval(async function() {
 		}
 	    }
 	    
-	    // age todo: fix timezone issue
+	    // age todo: fix timezone issue. collector is stamping in local time, not UTC
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200) * 1000).toISOString().substr(11, 8);
+		cell.innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200)*1000).toISOString().substr(11, 8);
 	    } else {
-		row.cells[5].innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200) * 1000).toISOString().substr(11, 8);
+		row.cells[5].innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200)*1000).toISOString().substr(11, 8);
 	    }
 	    
 	    // SNR

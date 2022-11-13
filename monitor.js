@@ -321,7 +321,11 @@ var intervalId=setInterval(async function() {
 			cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>';
 		    }
 		    if(rx.to_friend) {
-			cell.style.backgroundColor=colors.color_friend;
+			if(rx.to_friend[1]) {
+			    cell.style.backgroundColor=rx.to_friend[1];
+			} else {
+			    cell.style.backgroundColor=colors.color_friend;
+			}
 		    }
 		}
 	    }

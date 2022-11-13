@@ -329,7 +329,6 @@ At some point, I anticipate the option of querying one of the many callsign webp
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
 * Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
-* Colors in friends file are being ignored.
 * Document the arrl.cty feature.
 * Not all of the flags are 100% correct. I think I have all the countries right, but a lot of the territories and islands are still 'xx' (ie, undefined). I'll fill these in as I get time.
 * I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought cheap at a used book store on a trip to Las Cruces, New Mexico. In other words, it's my first ever Javascript project. So if you notice that the Javascript sucks, that's why.

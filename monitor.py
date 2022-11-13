@@ -945,10 +945,7 @@ if(__name__ == '__main__'):
         with open('friends.dat','r',encoding='utf8') as friend_file:
             friend_reader=csv.reader(friend_file,delimiter=',')
             for row in friend_reader:
-                call=row[0].upper()
-                name=row[1]
-                color=row[2]
-                friends[call]=[name,color]
+                friends[row[0].upper()]=[row[1],row[2]]
     else:
         print('No friends found...')
     print('Done.')

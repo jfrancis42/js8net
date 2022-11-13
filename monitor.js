@@ -100,6 +100,14 @@ var intervalId=setInterval(async function() {
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	colors=JSON.parse(color_stuff);
 	
+	// Get the friends JSON.
+	console.log('Fetching /friends');
+	var friend_response=await fetch('/friends');
+	var friend_stuff=await friend_response.text();
+	
+	// Convert the text into JSON. todo: shouldn't have to do this.
+	friends=JSON.parse(friend_stuff);
+	
 	// Get the station JSON.
 	console.log('Fetching /stations');
 	var station_response=await fetch('/stations');
@@ -286,8 +294,12 @@ var intervalId=setInterval(async function() {
             // from
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		if(rx.from_friend[0]) {
-		    cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_friend[0];
+		var f=false;
+		if(rx.from_call in friends) {
+		    f=friends[rx.from_call]
+		}
+		if(f && f[0]!='') {
+		    cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+f[0];
 		} else if(rx.from_info) {
 		    cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_info;
 		} else if(rx.from_country) {
@@ -295,11 +307,11 @@ var intervalId=setInterval(async function() {
 		} else {
 		    cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>';
 		}
-		if(rx.from_friend) {
-		    if(rx.from_friend[1]) {
-			cell.style.backgroundColor=rx.from_friend[1];
+		if(f) {
+		    if(f[1]!='') {
+			cell.style.backgroundColor=f[1];
 		    } else {
-			cell.style.backgroundColor=colors.color_friend;
+			cell.style.backgroundColor=colors.friend;
 		    }
 		}
 	    }
@@ -307,12 +319,16 @@ var intervalId=setInterval(async function() {
             // to
 	    if(new_row) {
 		var cell=row.insertCell(-1);
+		var f=false;
+		if(rx.to_call in friends) {
+		    f=friends[rx.to_call]
+		}
 		if(rx.to_at) {
 		    cell.innerHTML=rx.to_call;
-		    cell.style.backgroundColor=colors.color_at;
+		    cell.style.backgroundColor=colors.at;
 		} else {
-		    if(rx.to_friend[0]) {
-			cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_friend[0];
+		    if(f && f[0]!='') {
+			cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+f[0];
 		    } else if(rx.to_info) {
 			cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_info;
 		    } else if(rx.to_country) {
@@ -320,11 +336,11 @@ var intervalId=setInterval(async function() {
 		    } else {
 			cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>';
 		    }
-		    if(rx.to_friend) {
-			if(rx.to_friend[1]) {
-			    cell.style.backgroundColor=rx.to_friend[1];
+		    if(f) {
+			if(f[1]!='') {
+			    cell.style.backgroundColor=f[1];
 			} else {
-			    cell.style.backgroundColor=colors.color_friend;
+			    cell.style.backgroundColor=colors.friend;
 			}
 		    }
 		}
@@ -338,14 +354,20 @@ var intervalId=setInterval(async function() {
 		}
 	    }
 	    
-	    // distance todo: maybe not working? or maybe just no new traffic?
+	    // distance
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		if(rx.lat && rx.lon && stations[rx.uuid]['lat'] && stations[rx.uuid]['lon']) {
-		    cell.innerHTML=Math.round(calcCrow(stations[rx.uuid]['lat'],stations[rx.uuid]['lon'],
-						       rx.lat,rx.lon))+' mi @ '+
-			Math.round(bearing(stations[rx.uuid]['lat'],stations[rx.uuid]['lon'],
-					   rx.lat,rx.lon))+' deg';
+		    var dist=Math.round(calcCrow(stations[rx.uuid]['lat'],stations[rx.uuid]['lon'],
+						 rx.lat,rx.lon));
+		    var brg=Math.round(bearing(stations[rx.uuid]['lat'],stations[rx.uuid]['lon'],
+						   rx.lat,rx.lon));
+		    cell.innerHTML=dist+' mi @ '+brg+' deg';
+		    // Highlight anyone within 100 mi. todo: Should
+		    // probably make this an adjustable parameter.
+		    if(dist<=100) {
+			cell.style.backgroundColor=colors.close;
+		    }
 		}
 	    }
 	    
@@ -362,13 +384,13 @@ var intervalId=setInterval(async function() {
 		var cell=row.insertCell(-1);
 		cell.innerHTML=rx.snr;
 		if(rx.snr>0) {
-		    cell.style.backgroundColor=colors.color_snr_supergreen;
+		    cell.style.backgroundColor=colors.snr_supergreen;
 		} else if(rx.snr>=-10 && rx.snr<=0) {
-		    cell.style.backgroundColor=colors.color_snr_green;
+		    cell.style.backgroundColor=colors.snr_green;
 		} else if(rx.snr<-10 && rx.snr>=-17) {
-		    cell.style.backgroundColor=colors.color_snr_yellow;
+		    cell.style.backgroundColor=colors.snr_yellow;
 		} else {
-		    cell.style.backgroundColor=colors.color_snr_red;
+		    cell.style.backgroundColor=colors.snr_red;
 		}
 	    }
 	    
@@ -390,25 +412,25 @@ var intervalId=setInterval(async function() {
 		var tmp=rx.text.split(' ');
 		var img=false;
 		if(tmp[2]=='INFO' && tmp[3].search('CC=')!=-1) {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/ahrn.jpg';
 		} else if(rx.to_call=='@AHRN') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/ahrn.jpg';
 		} else if(rx.to_call=='@SOTA') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/sota.jpg';
 		} else if(rx.to_call=='@POTA') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/pota.jpg';
 		} else if(rx.to_call=='@ARFCOM') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/ar.svg';
 		} else if(rx.to_call=='@AMRRON') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/amrron.jpg';
 		} else if(tmp[2]=='HEARTBEAT' || rx.to_call=='@HB') {
-		    cell.style.backgroundColor=colors.color_heartbeat;
+		    cell.style.backgroundColor=colors.heartbeat;
 		    img='/svg/zombie.svg'
 		} else if(tmp[2]=='SNR' || tmp[2]=='SNR?' ||
 			  tmp[2]=='INFO' || tmp[2]=='INFO?' ||
@@ -416,26 +438,26 @@ var intervalId=setInterval(async function() {
 			  tmp[2]=='HEARING' || tmp[2]=='HEARING?' ||
 			  tmp[2]=='QUERY') {
 		    img='/svg/gears.svg';
-		    cell.style.backgroundColor=colors.color_query;
+		    cell.style.backgroundColor=colors.query;
 		} else if(tmp[2]=='MSG' || tmp[2]=='ACK') {
 		    img='/svg/mail.svg';
 		} else if(rx.to_call=='@ALLCALL' && tmp[2]=='CQ') {
-		    cell.style.backgroundColor=colors.color_cq;
+		    cell.style.backgroundColor=colors.cq;
 		    img='/svg/key.svg';
 		} else if(rx.to_call=='@JS8CHESS') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/chess.svg';
 		} else if(rx.to_call=='@APRSIS' && tmp[3]==':SMSGTE') {
-		    cell.style.backgroundColor=colors.color_cq;
+		    cell.style.backgroundColor=colors.cq;
 		    img='/svg/sms.svg';
 		} else if(rx.to_call=='@APRSIS' && tmp[3]==':EMAIL-2') {
-		    cell.style.backgroundColor=colors.color_cq;
+		    cell.style.backgroundColor=colors.cq;
 		    img='/svg/mail.svg';
 		} else if(rx.to_call=='@APRSIS' || tmp[2]=='GRID' || tmp[2]=='GRID?') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/gps.svg';
 		} else {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/key.svg';
 		}
 		if(img) {

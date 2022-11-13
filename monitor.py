@@ -63,27 +63,28 @@ global css
 global colors
 
 colors={}
-colors['color_friend']='#F1C40F'
-colors['color_mycall']='#2ECC71'
-colors['color_at']='#5DADE2'
-colors['color_snr_supergreen']='#66FF00'
-colors['color_snr_green']='#7CD342'
-colors['color_snr_yellow']='#FDD835'
-colors['color_snr_red']='#F4511E'
-colors['color_heartbeat']='#FADBD8'
-colors['color_query']='#D6EAF8'
-colors['color_table_header_background']='#08389F'
-colors['color_table_header_text']='#FFFFFF'
-colors['color_link']='#000000'
-colors['color_border_bottom_odd']='#DDDDDD'
-colors['color_border_bottom_even']='#F3F3F3'
-colors['color_border_bottom_last']='#009879'
-colors['color_cq']='#FCF3CF'
-colors['color_non_zombie_traffic']='#FFFFFF'
+colors['friend']='#F1C40F'
+colors['mycall']='#2ECC71'
+colors['at']='#5DADE2'
+colors['snr_supergreen']='#66FF00'
+colors['snr_green']='#7CD342'
+colors['snr_yellow']='#FDD835'
+colors['snr_red']='#F4511E'
+colors['heartbeat']='#FADBD8'
+colors['query']='#D6EAF8'
+colors['table_header_background']='#08389F'
+colors['table_header_text']='#FFFFFF'
+colors['link']='#000000'
+colors['border_bottom_odd']='#DDDDDD'
+colors['border_bottom_even']='#F3F3F3'
+colors['border_bottom_last']='#009879'
+colors['cq']='#FCF3CF'
+colors['non_zombie_traffic']='#FFFFFF'
+colors['close']='#D4EFDF'
 
 css=''
 css+='a {'
-css+='  color: '+colors['color_link']+';'
+css+='  color: '+colors['link']+';'
 css+='  text-decoration: none;'
 css+='  text-transform: uppercase;'
 css+='}'
@@ -102,8 +103,8 @@ css+='    font-size: 0.9em;'
 css+='    font-family: sans-serif;'
 css+='}'
 css+='.styled-table thead tr {'
-css+='    background-color: '+colors['color_table_header_background']+';'
-css+='    color: '+colors['color_table_header_text']+';'
+css+='    background-color: '+colors['table_header_background']+';'
+css+='    color: '+colors['table_header_text']+';'
 css+='    text-align: left;'
 css+='}'
 css+='.styled-table th,'
@@ -111,13 +112,13 @@ css+='.styled-table td {'
 css+='    padding: 12px 15px;'
 css+='}'
 css+='.styled-table tbody tr {'
-css+='    border-bottom: 1px solid '+colors['color_border_bottom_odd']+';'
+css+='    border-bottom: 1px solid '+colors['border_bottom_odd']+';'
 css+='}'
 css+='.styled-table tbody tr:nth-of-type(even) {'
-css+='    background-color: '+colors['color_border_bottom_even']+';'
+css+='    background-color: '+colors['border_bottom_even']+';'
 css+='}'
 css+='.styled-table tbody tr:last-of-type {'
-css+='    border-bottom: 2px solid '+colors['color_border_bottom_last']+';'
+css+='    border-bottom: 2px solid '+colors['border_bottom_last']+';'
 css+='}'
 
 prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. Brandon'],['3B7','Agalega & St. Brandon'],
@@ -490,12 +491,6 @@ def call_info(call):
     else:
         return(False)
 
-def call_friend(call):
-    if(call in friends):
-        return(friends[call])
-    else:
-        return(False)
-
 def main_page ():
     global css
     doc,tag,text=Doc().tagtext()
@@ -608,10 +603,30 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 else:
                     self.send_response(404)
                     self.end_headers()
+        elif(self.path=='/friends'):
+            self.send_response(200)
+            self.send_header('Content-type','application/json')
+            self.end_headers()
+            if(exists('friends.dat')):
+                friends={}
+                print('Loading friend records...')
+                with open('friends.dat','r',encoding='utf8') as friend_file:
+                    friend_reader=csv.reader(friend_file,delimiter=',')
+                    for row in friend_reader:
+                        friends[row[0].upper()]=[row[1],row[2]]
+            else:
+                print('No friends found...')
+            self.wfile.write(str.encode(json.dumps(friends)))
         elif(self.path=='/colors'):
             self.send_response(200)
             self.send_header('Content-type','application/json')
             self.end_headers()
+            if(exists('colors.dat')):
+                print('Loading colors...')
+                with open('colors.dat','r',encoding='utf8') as colors_file:
+                    colors_reader=csv.reader(colors_file,delimiter=',')
+                    for row in colors_reader:
+                        colors[row[0]]=row[1]
             self.wfile.write(str.encode(json.dumps(colors)))
         elif(self.path=='/stations'):
             self.send_response(200)
@@ -720,15 +735,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         else:
                             rx['from_info']=False
                             rx['to_info']=False
-                        if(friends):
-                            rx['from_friend']=call_friend(fmcall)
-                            if(tocall and not(toat)):
-                                rx['to_friend']=call_friend(tocall)
-                            else:
-                                rx['to_friend']=False
-                        else:
-                            rx['from_friend']=False
-                            rx['to_friend']=False
                         if('SNR' in rx['params']):
                             rx['snr']=rx['params']['SNR']
                         else:

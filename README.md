@@ -318,23 +318,29 @@ ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
 At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for non-USA call info. For now, the web interface is somewhat USA-centric.
 
 
-### Known Issues (ie, Bugs)
+### Known Issues
 
-(in process...)
+#### Bugs to be Fixed
 
-* Neither the core library nor the GUI properly handle relays.
 * The web interface must be run from it's "extraction directory" (ie, it's not yet smart enough to install these files in the right place and run from anywhere).
 * Does not delete old/expired traffic without a browser reload.
 * Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
 * Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
-* Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
+* I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought cheap at a used book store on a recent trip. In other words, it's my first ever Javascript project. So if you notice that the Javascript sucks, that's why.
+
+#### Features to be Added
+
+* Add an adjustable parameter for the "close" highlighting (currently fixed at 100mi)
+* Add metric option (for countries who've never sent people to walk around on the moon).
+* Neither the core library nor the GUI properly handle relays.
 * Document the arrl.cty feature.
+* Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
 * Not all of the flags are 100% correct. I think I have all the countries right, but a lot of the territories and islands are still 'xx' (ie, undefined). I'll fill these in as I get time.
-* I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought cheap at a used book store on a trip to Las Cruces, New Mexico. In other words, it's my first ever Javascript project. So if you notice that the Javascript sucks, that's why.
 
 ### Credits
 
 * The beautiful flag icons are from the project: https://github.com/lipis/flag-icons
 * The country callsign mapping is courtesy of: https://www.country-files.com/category/contest/
 * The SVG icons are from Creative Commons and Font Awesome Free.
+* COAS Book in Las Cruces, NM for being awesome.

@@ -93,6 +93,7 @@ var intervalId=setInterval(async function() {
     
     if(first_time) {
 	// Get the color JSON.
+	console.log('Fetching /colors');
 	var color_response=await fetch('/colors');
 	var color_stuff=await color_response.text();
 	
@@ -100,6 +101,7 @@ var intervalId=setInterval(async function() {
 	colors=JSON.parse(color_stuff);
 	
 	// Get the station JSON.
+	console.log('Fetching /stations');
 	var station_response=await fetch('/stations');
 	var station_stuff=await station_response.text();
 	
@@ -107,6 +109,7 @@ var intervalId=setInterval(async function() {
 	stations=JSON.parse(station_stuff);
     } else if(utcSecondsSinceEpoch%5==0) {
 	// Get the station JSON.
+	console.log('Fetching /stations');
 	var station_response=await fetch('/stations');
 	var station_stuff=await station_response.text();
 	
@@ -149,7 +152,7 @@ var intervalId=setInterval(async function() {
 	    var age=Math.round(utcSecondsSinceEpoch-stations[key].time-25200);
 	    // todo: this shouldn't be a fixed time
 	    if(age<=3600) {
-		console.log(stations[key].radio+': '+age+' sec')
+//		console.log(stations[key].radio+': '+age+' sec');
 		var new_row=false;
 		if(!row) {
 		    row=table.insertRow(0);
@@ -214,6 +217,7 @@ var intervalId=setInterval(async function() {
     
     if(first_time) {
 	// Get the traffic JSON.
+	console.log('Fetching /traffic');
 	var traffic_response=await fetch('/traffic');
 	var traffic_stuff=await traffic_response.text();
 	
@@ -221,6 +225,7 @@ var intervalId=setInterval(async function() {
 	traffic=JSON.parse(traffic_stuff);
     } else if(utcSecondsSinceEpoch%5==0) {
 	// Get the traffic JSON.
+	console.log('Fetching /traffic');
 	var traffic_response=await fetch('/traffic');
 	var traffic_stuff=await traffic_response.text();
 	
@@ -282,13 +287,29 @@ var intervalId=setInterval(async function() {
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		if(rx.from_friend[0]) {
-		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_friend[0];
+		    if('from_flag' in rx) {
+			cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_friend[0];
+		    } else {
+			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_friend[0];
+		    }
 		} else if(rx.from_info) {
-		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_info;
+		    if('from_flag' in rx) {
+			cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_info;
+		    } else {
+			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_info;
+		    }
 		} else if(rx.from_country) {
-		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_country;
+		    if('from_flag' in rx) {
+			cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_country;
+		    } else {
+			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>'+': '+rx.from_country;
+		    }
 		} else {
-		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>';
+		    if('from_flag' in rx) {
+			cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>';
+		    } else {
+			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.from_call+'</a>';
+		    }
 		}
 		if(rx.from_friend) {
 		    if(rx.from_friend[1]) {
@@ -307,13 +328,29 @@ var intervalId=setInterval(async function() {
 		    cell.style.backgroundColor=colors.color_at;
 		} else {
 		    if(rx.to_friend[0]) {
-			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_friend[0];
+			if('to_flag' in rx) {
+			    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_friend[0];
+			} else {
+			    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_friend[0];
+			}
 		    } else if(rx.to_info) {
-			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_info;
+			if('to_flag' in rx) {
+			    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_info;
+			} else {
+			    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_info;
+			}
 		    } else if(rx.to_country) {
-			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_country;
+			if('to_flag' in rx) {
+			    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_country;
+			} else {
+			    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>'+': '+rx.to_country;
+			}
 		    } else {
-			cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>';
+			if('to_flag' in rx) {
+			    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="24" height="24" />&nbsp;&nbsp;<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>';
+			} else {
+			    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank">'+rx.to_call+'</a>';
+			}
 		    }
 		    if(rx.to_friend) {
 			cell.style.backgroundColor=colors.color_friend;
@@ -379,52 +416,55 @@ var intervalId=setInterval(async function() {
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		var tmp=rx.text.split(' ');
-		var img=false
-		if(tmp[2]=='HEARTBEAT' || rx.to_call=='@HB') {
+		var img=false;
+		if(tmp[2]=='INFO' && tmp[3].search('CC=')!=-1) {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/jpg/ahrn.jpg';
+		} else if(rx.to_call=='@AHRN') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/jpg/ahrn.jpg';
+		} else if(rx.to_call=='@SOTA') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/jpg/sota.jpg';
+		} else if(rx.to_call=='@POTA') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/jpg/pota.jpg';
+		} else if(rx.to_call=='@ARFCOM') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/svg/ar.svg';
+		} else if(rx.to_call=='@AMRRON') {
+		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
+		    img='/jpg/amrron.jpg';
+		} else if(tmp[2]=='HEARTBEAT' || rx.to_call=='@HB') {
 		    cell.style.backgroundColor=colors.color_heartbeat;
-		    img='zombie.svg'
+		    img='/svg/zombie.svg'
 		} else if(tmp[2]=='SNR' || tmp[2]=='SNR?' ||
 			  tmp[2]=='INFO' || tmp[2]=='INFO?' ||
 			  tmp[2]=='STATUS' || tmp[2]=='STATUS?' ||
 			  tmp[2]=='HEARING' || tmp[2]=='HEARING?' ||
 			  tmp[2]=='QUERY') {
-		    img='gears.svg';
+		    img='/svg/gears.svg';
 		    cell.style.backgroundColor=colors.color_query;
 		} else if(tmp[2]=='MSG' || tmp[2]=='ACK') {
-		    img='mail.svg';
+		    img='/svg/mail.svg';
 		} else if(rx.to_call=='@ALLCALL' && tmp[2]=='CQ') {
 		    cell.style.backgroundColor=colors.color_cq;
-		    img='key.svg';
+		    img='/svg/key.svg';
 		} else if(rx.to_call=='@JS8CHESS') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='chess.svg';
+		    img='/svg/chess.svg';
 		} else if(rx.to_call=='@APRSIS' && tmp[3]==':SMSGTE') {
 		    cell.style.backgroundColor=colors.color_cq;
-		    img='sms.svg';
+		    img='/svg/sms.svg';
 		} else if(rx.to_call=='@APRSIS' && tmp[3]==':EMAIL-2') {
 		    cell.style.backgroundColor=colors.color_cq;
-		    img='mail.svg';
+		    img='/svg/mail.svg';
 		} else if(rx.to_call=='@APRSIS' || tmp[2]=='GRID' || tmp[2]=='GRID?') {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='gps.svg';
-		} else if(rx.to_call=='@SOTA') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='sota.jpg';
-		} else if(rx.to_call=='@POTA') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='pota.jpg';
-		} else if(rx.to_call=='@ARFCOM') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='ar.svg';
-		} else if(rx.to_call=='@AMRRON') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='amrron.jpg';
-		} else if(rx.to_call=='@AHRN') {
-		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='ahrn.jpg';
+		    img='/svg/gps.svg';
 		} else {
 		    cell.style.backgroundColor=colors.color_non_zombie_traffic;
-		    img='key.svg';
+		    img='/svg/key.svg';
 		}
 		if(img) {
 		    cell.innerHTML='<img src=\"'+img+'\" width=\"24\" height=\"24\"/>&nbsp;&nbsp;'+rx.text;

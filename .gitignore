@@ -19,4 +19,6 @@ start_*.sh
 rx.sh
 tx.sh
 arrl.cty
-flags/*
+flag-icons-main
+flagmap.json
+		

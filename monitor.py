@@ -19,8 +19,8 @@ from threading import Thread
 from yattag import Doc
 import maidenhead as mh
 from queue import Queue
-from urllib.parse import urlparse, parse_qs
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse,parse_qs
+from http.server import HTTPServer,BaseHTTPRequestHandler
 import urllib
 from io import BytesIO
 import datetime
@@ -32,6 +32,7 @@ global listen
 
 global calls
 global prefixes
+global flags
 global friends
 
 global id
@@ -183,7 +184,7 @@ prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. 
           ['DW','Philippines'],['DX','Philippines'],['DY','Philippines'],['DZ','Philippines'],['E3','Eritrea'],
           ['E4','Palestine'],['E5','South Cook Islands'],['E6','Niue'],['E7','Bosnia-Herzegovina'],['AM','Spain'],
           ['AN','Spain'],['AO','Spain'],['EA','Spain'],['EB','Spain'],['EC','Spain'],['ED','Spain'],['EE','Spain'],
-          ['EF','Spain'],['EG','Spain'],['EH','Spain'],  ['AM6','Balearic Islands'],['AN6','Balearic Islands'],
+          ['EF','Spain'],['EG','Spain'],['EH','Spain'],['AM6','Balearic Islands'],['AN6','Balearic Islands'],
           ['AO6','Balearic Islands'],['EA6','Balearic Islands'],['EB6','Balearic Islands'],['EC6','Balearic Islands'],
           ['ED6','Balearic Islands'],['EE6','Balearic Islands'],['EF6','Balearic Islands'],['EG6','Balearic Islands'],
           ['EH6','Balearic Islands'],['AM8','Canary Islands'],['AN8','Canary Islands'],['AO8','Canary Islands'],
@@ -223,7 +224,7 @@ prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. 
           ['GJ','Jersey'],['MH','Jersey'],['MJ','Jersey'],['2A','Scotland'],['2M','Scotland'],['GM','Scotland'],
           ['GS','Scotland'],['MA','Scotland'],['MM','Scotland'],['MS','Scotland'],['2U','Guernsey'],['GP','Guernsey'],
           ['GU','Guernsey'],['MP','Guernsey'],['MU','Guernsey'],['2W','Wales'],['GC','Wales'],['GW','Wales'],
-          ['MC','Wales'],['MW','Wales'],  ['H4','Solomon Islands'],['H40','Temotu Province'],['HA','Hungary'],
+          ['MC','Wales'],['MW','Wales'],['H4','Solomon Islands'],['H40','Temotu Province'],['HA','Hungary'],
           ['HG','Hungary'],['HB','Switzerland'],['HE','Switzerland'],['HB0','Liechtenstein'],['HE0','Liechtenstein'],
           ['HC','Ecuador'],['HD','Ecuador'],['HC8','Galapagos Islands'],['HD8','Galapagos Islands'],['4V','Haiti'],
           ['HH','Haiti'],['HI','Dominican Republic'],['5J','Colombia'],['5K','Colombia'],['HJ','Colombia'],
@@ -297,7 +298,7 @@ prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. 
           ['TF','Iceland'],['TD','Guatemala'],['TG','Guatemala'],['TE','Costa Rica'],['TI','Costa Rica'],
           ['TE9','Cocos Island'],['TI9','Cocos Island'],['TJ','Cameroon'],['TK','Corsica'],
           ['TL','Central African Republic'],['TN','Republic of the Congo'],['TR','Gabon'],['TT','Chad'],
-          ['TU', 'Cote d\'Ivoire'],['TY','Benin'],['TZ','Mali'],['R','European Russia'],['U','European Russia'],
+          ['TU','Cote d\'Ivoire'],['TY','Benin'],['TZ','Mali'],['R','European Russia'],['U','European Russia'],
           ['R8F','European Russia'],['R8G','European Russia'],['R8X','European Russia'],['R9F','European Russia'],
           ['R9G','European Russia'],['R9X','European Russia'],['RA2','Kaliningrad'],['U2F','Kaliningrad'],
           ['U2K','Kaliningrad'],['UA2','Kaliningrad'],['UB2','Kaliningrad'],['UC2','Kaliningrad'],
@@ -378,8 +379,93 @@ prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. 
           ['ZT','South Africa'],['ZU','South Africa'],['ZR8','Pr. Edward & Marion Is.'],
           ['ZS8','Pr. Edward & Marion Is.'],['ZT8','Pr. Edward & Marion Is.'],['ZU8','Pr. Edward & Marion']]
 
+flags={"Sov Mil Order of Malta":"xx.svg","Spratly Islands":"xx.svg","Monaco":"mc.svg","Agalega & St. Brandon":"xx.svg",
+       "Mauritius":"mu.svg","Rodriguez Island":"xx.svg","Equatorial Guinea":"gq.svg","Annobon Island":"xx.svg",
+       "Fiji":"fj.svg","Conway Reef":"xx.svg","Rotuma Island":"xx.svg","Kingdom of Eswatini":"sz.svg",
+       "Tunisia":"tn.svg","Vietnam":"vn.svg","Guinea":"gn.svg","Bouvet":"bv.svg",
+       "Peter 1 Island":"xx.svg","Azerbaijan":"az.svg","Georgia":"ge.svg","Montenegro":"me.svg",
+       "Sri Lanka":"lk.svg","ITU HQ":"un.svg","United Nations HQ":"un.svg","Timor - Leste":"tl.svg",
+       "Israel":"il.svg","Libya":"ly.svg","Cyprus":"cy.svg","Tanzania":"tz.svg",
+       "Nigeria":"ng.svg","Madagascar":"mg.svg","Mauritania":"mr.svg","Niger":"ne.svg",
+       "Togo":"tg.svg","Samoa":"ws.svg","Uganda":"ug.svg","Kenya":"ke.svg",
+       "Senegal":"sn.svg","Jamaica":"jm.svg","Yemen":"ye.svg","Lesotho":"ls.svg",
+       "Malawi":"mw.svg","Algeria":"dz.svg","Barbados":"bb.svg","Maldives":"mv.svg",
+       "Guyana":"gy.svg","Croatia":"hr.svg","Ghana":"gh.svg","Malta":"mt.svg",
+       "Zambia":"zm.svg","Kuwait":"kw.svg","Sierra Leone":"sl.svg","West Malaysia":"my.svg",
+       "East Malaysia":"my.svg","Nepal":"np.svg","Dem. Rep. of the Congo":"cd.svg","Burundi":"bi.svg",
+       "Singapore":"sg.svg","Rwanda":"rw.svg","Trinidad & Tobago":"tt.svg","Botswana":"bw.svg",
+       "Tonga":"to.svg","Oman":"om.svg","Bhutan":"bt.svg","United Arab Emirates":"ae.svg",
+       "Qatar":"qa.svg","Bahrain":"bh.svg","Pakistan":"pk.svg","Scarborough Reef":"xx.svg",
+       "Taiwan":"tw.svg","Pratas Island":"xx.svg","China":"cn.svg","Nauru":"nr.svg",
+       "Andorra":"ad.svg","The Gambia":"gm.svg","Bahamas":"bs.svg","Mozambique":"mz.svg",
+       "Chile":"cl.svg","San Felix & San Ambrosio":"xx.svg","Easter Island":"cl.svg","Juan Fernandez Islands":"xx.svg",
+       "Antarctica":"gs.svg","Cuba":"cu.svg","Morocco":"ma.svg","Bolivia":"bo.svg",
+       "Portugal":"pt.svg","Madeira Islands":"xx.svg","Azores":"xx.svg","Uruguay":"uy.svg",
+       "Sable Island":"xx.svg","St. Paul Island":"xx.svg","Angola":"ao.svg","Cape Verde":"xx.svg",
+       "Comoros":"km.svg","Fed. Rep. of Germany":"de.svg","Philippines":"ph.svg","Eritrea":"er.svg",
+       "Palestine":"ps.svg","North Cook Islands":"ck.svg","South Cook Islands":"ck.svg","Niue":"nu.svg",
+       "Bosnia-Herzegovina":"ba.svg","Spain":"es.svg","Balearic Islands":"xx.svg","Canary Islands":"ic.svg",
+       "Ceuta & Melilla":"ea.svg","Ireland":"ie.svg","Armenia":"am.svg","Liberia":"lr.svg",
+       "Iran":"ir.svg","Moldova":"md.svg","Estonia":"ee.svg","Ethiopia":"et.svg",
+       "Belarus":"by.svg","Kyrgyzstan":"kg.svg","Tajikistan":"tj.svg","Turkmenistan":"tm.svg",
+       "France":"fr.svg","Guadeloupe":"gp.svg","Mayotte":"yt.svg","St. Barthelemy":"bl.svg",
+       "New Caledonia":"nc.svg","Chesterfield Islands":"xx.svg","Martinique":"mq.svg","French Polynesia":"pf.svg",
+       "Austral Islands":"xx.svg","Clipperton Island":"cp.svg","Marquesas Islands":"xx.svg","St. Pierre & Miquelon":"pm.svg",
+       "Reunion Island":"xx.svg","St. Martin":"mf.svg","Glorioso Islands":"xx.svg","Juan de Nova, Europa":"xx.svg",
+       "Tromelin Island":"xx.svg","Crozet Island":"xx.svg","Kerguelen Islands":"xx.svg","Amsterdam & St. Paul Is.":"xx.svg",
+       "Wallis & Futuna Islands":"wf.svg","French Guiana":"gf.svg","England":"gb-eng.svg","Isle of Man":"im.svg",
+       "Northern Ireland":"gb-nir.svg","Jersey":"je.svg","Scotland":"gb-sct.svg","Guernsey":"gg.svg",
+       "Wales":"gb-wls.svg","Solomon Islands":"sb.svg","Temotu Province":"xx.svg","Hungary":"hu.svg",
+       "Switzerland":"ch.svg","Liechtenstein":"li.svg","Ecuador":"ec.svg","Galapagos Islands":"xx.svg",
+       "Haiti":"ht.svg","Dominican Republic":"do.svg","Colombia":"co.svg","San Andres & Providencia":"xx.svg",
+       "Malpelo Island":"xx.svg","Republic of Korea":"kr.svg","Panama":"pa.svg","Honduras":"hn.svg",
+       "Thailand":"th.svg","Vatican City":"va.svg","Saudi Arabia":"sa.svg","Italy":"it.svg",
+       "Sardinia":"xx.svg","Djibouti":"dj.svg","Grenada":"gd.svg","Guinea-Bissau":"gw.svg",
+       "St. Lucia":"lc.svg","Dominica":"dm.svg","St. Vincent":"vc.svg","Japan":"jp.svg",
+       "Minami Torishima":"xx.svg","Ogasawara":"xx.svg","Mongolia":"mn.svg","Svalbard":"sj.svg",
+       "Jan Mayen":"sj.svg","Jordan":"jo.svg","United States":"us.svg","Guantanamo Bay":"us.svg",
+       "Mariana Islands":"mp.svg","Baker & Howland Islands":"us.svg","Guam":"gu.svg","Johnston Island":"us.svg",
+       "Midway Island":"us.svg","Palmyra & Jarvis Islands":"xx.svg","Hawaii":"us.svg","Kure Island":"xx.svg",
+       "American Samoa":"as.svg","Swains Island":"xx.svg","Wake Island":"us.svg","Alaska":"us.svg",
+       "Navassa Island":"xx.svg","US Virgin Islands":"vi.svg","Puerto Rico":"pr.svg","Desecheo Island":"xx.svg",
+       "Norway":"no.svg","Argentina":"ar.svg","Luxembourg":"lu.svg","Lithuania":"lt.svg",
+       "Bulgaria":"bg.svg","Peru":"pe.svg","Lebanon":"lb.svg","Austria":"at.svg",
+       "Finland":"fi.svg","Aland Islands":"ax.svg","Market Reef":"xx.svg","Czech Republic":"cz.svg",
+       "Slovak Republic":"sk.svg","Belgium":"be.svg","Greenland":"gl.svg","Faroe Islands":"fo.svg",
+       "Denmark":"dk.svg","Papua New Guinea":"pg.svg","Aruba":"aw.svg","DPR of Korea":"kp.svg",
+       "Netherlands":"nl.svg","Curacao":"xx.svg","Bonaire":"bq.svg","Saba & St. Eustatius":"bq.svg",
+       "Sint Maarten":"sx.svg","Brazil":"br.svg","Fernando de Noronha":"xx.svg","St. Peter & St. Paul":"xx.svg",
+       "Trindade & Martim Vaz":"xx.svg","Suriname":"sr.svg","Franz Josef Land":"xx.svg","Western Sahara":"eh.svg",
+       "Bangladesh":"bd.svg","Slovenia":"si.svg","Seychelles":"sc.svg","Sao Tome & Principe":"st.svg",
+       "Sweden":"se.svg","Poland":"pl.svg","Sudan":"sd.svg","Egypt":"eg.svg",
+       "Greece":"gr.svg","Mount Athos":"xx.svg","Dodecanese":"xx.svg","Crete":"xx.svg",
+       "Tuvalu":"tv.svg","Western Kiribati":"ki.svg","Central Kiribati":"ki.svg","Eastern Kiribati":"ki.svg",
+       "Banaba Island":"xx.svg","Somalia":"so.svg","San Marino":"sm.svg","Palau":"pw.svg",
+       "Asiatic Turkey":"tr.svg","Iceland":"is.svg","Guatemala":"gt.svg","Costa Rica":"cr.svg",
+       "Cocos Island":"cc.svg","Cameroon":"cm.svg","Corsica":"xx.svg","Central African Republic":"cf.svg",
+       "Republic of the Congo":"cd.svg","Gabon":"ga.svg","Chad":"td.svg","Cote d'Ivoire":"ci.svg",
+       "Benin":"bj.svg","Mali":"ml.svg","European Russia":"ru.svg","Kaliningrad":"ru.svg",
+       "Asiatic Russia":"ru.svg","Uzbekistan":"uz.svg","Kazakhstan":"kz.svg","Ukraine":"ua.svg",
+       "Antigua & Barbuda":"ag.svg","Belize":"bz.svg","St. Kitts & Nevis":"kn.svg","Namibia":"na.svg",
+       "Micronesia":"fm.svg","Marshall Islands":"mh.svg","Brunei Darussalam":"bn.svg","Canada":"ca.svg",
+       "Australia":"au.svg","Heard Island":"hm.svg","Macquarie Island":"xx.svg","Cocos (Keeling) Islands":"cc.svg",
+       "Lord Howe Island":"xx.svg","Mellish Reef":"xx.svg","Norfolk Island":"nf.svg","Willis Island":"xx.svg",
+       "Christmas Island":"cs.svg","Anguilla":"ai.svg","Montserrat":"ms.svg","British Virgin Islands":"vg.svg",
+       "Turks & Caicos Islands":"tc.svg","Pitcairn Island":"pn.svg","Ducie Island":"xx.svg","Falkland Islands":"fk.svg",
+       "South Georgia Island":"gs.svg","South Shetland Islands":"xx.svg","South Orkney Islands":"xx.svg","South Sandwich Islands":"gs.svg",
+       "Bermuda":"bm.svg","Chagos Islands":"xx.svg","Hong Kong":"hk.svg","India":"in.svg",
+       "Andaman & Nicobar Is.":"xx.svg","Lakshadweep Islands":"xx.svg","Mexico":"mx.svg","Revillagigedo":"xx.svg",
+       "Burkina Faso":"bf.svg","Cambodia":"kh.svg","Laos":"la.svg","Macao":"xx.svg",
+       "Myanmar":"mm.svg","Afghanistan":"af.svg","Indonesia":"id.svg","Iraq":"iq.svg",
+       "Vanuatu":"vu.svg","Syria":"sy.svg","Latvia":"lv.svg","Nicaragua":"ni.svg",
+       "Romania":"ro.svg","El Salvador":"sv.svg","Serbia":"rs.svg","Venezuela":"ve.svg",
+       "Aves Island":"xx.svg","Zimbabwe":"zw.svg","North Macedonia":"mk.svg","Republic of Kosovo":"xk.svg",
+       "Republic of South Sudan":"ss.svg","Albania":"al.svg","Gibraltar":"gi.svg","UK Base Areas on Cyprus":"gb-eng.svg",
+       "St. Helena":"sh.svg","Ascension Island":"sh.svg","Tristan da Cunha & Gough":"sh.svg","Cayman Islands":"ky.svg",
+       "Tokelau Islands":"tk.svg","New Zealand":"nz.svg","Chatham Islands":"xx.svg","Kermadec Islands":"xx.svg",
+       "N.Z. Subantarctic Is.":"nz.svg","Paraguay":"py.svg","South Africa":"za.svg","Pr. Edward & Marion Is.":"xx.svg"}
+
 def call_country(call):
-    print('Looking up country for: '+str(call))
     global prefixes
     cty=list(sorted(list(filter(lambda n: call.upper().find(n[0])==0,prefixes)),key=lambda x: len(x[0]),reverse=True))
     print(cty)
@@ -388,8 +474,16 @@ def call_country(call):
     else:
         return(False)
 
+def call_flag(call):
+    global flags
+    cty=call_country(call)
+    if(cty):
+        if(cty in flags):
+            return(flags[cty])
+        else:
+            return('xx')
+
 def call_info(call):
-    print('Looking up info for: '+call)
     global calls
     if(call in calls):
         return(', '.join(calls[call]))
@@ -397,7 +491,6 @@ def call_info(call):
         return(False)
 
 def call_friend(call):
-    print('Looking up friend for: '+call)
     if(call in friends):
         return(friends[call])
     else:
@@ -405,44 +498,44 @@ def call_friend(call):
 
 def main_page ():
     global css
-    doc, tag, text=Doc().tagtext()
-    with tag('html', lang='en'):
+    doc,tag,text=Doc().tagtext()
+    with tag('html',lang='en'):
         with tag('head'):
             with tag('style'):
                 text(css)
         with tag('body'):
             with open('monitor.js','r') as file:
                 js=file.read()
-            with tag('script', type='text/javascript'):
+            with tag('script',type='text/javascript'):
                 doc.asis(js)
-            with tag('div', id='wrapper'):
+            with tag('div',id='wrapper'):
                 with tag('h1'):
                     text('Stations')
-                with tag('table', id='stations', klass='styled-table'):
+                with tag('table',id='stations',klass='styled-table'):
                     pass
                 with tag('br'):
                     pass
                 with tag('h1'):
                     text('Traffic')
-                with tag('table', id='traffic', klass='styled-table'):
+                with tag('table',id='traffic',klass='styled-table'):
                     pass
                 with tag('br'):
                     pass
-                with tag('a', href='https://github.com/jfrancis42/js8net', target='_blank'):
+                with tag('a',href='https://github.com/jfrancis42/js8net',target='_blank'):
                     text('js8net')
                 text(' by ')
-                with tag('a', href='https://www.qrz.com/db/N0GQ', target='_blank'):
+                with tag('a',href='https://www.qrz.com/db/N0GQ',target='_blank'):
                     text('N0GQ')
                 with tag('br'):
                     pass
     return(doc.getvalue())
 
 def missing_page ():
-    doc, tag, text=Doc().tagtext()
+    doc,tag,text=Doc().tagtext()
     global refresh
-    with tag('html', lang='en'):
+    with tag('html',lang='en'):
         with tag('body'):
-            with tag('div', id='wrapper'):
+            with tag('div',id='wrapper'):
                 text('This page does not exist...')
     return(doc.getvalue())
 
@@ -453,116 +546,82 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global stations
         global stations_lock
         global version
-        doc, tag, text=Doc().tagtext()
+        doc,tag,text=Doc().tagtext()
         if(self.path=='/'):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(str.encode(main_page()))
-        elif(self.path=='/sms.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/sms.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/gears.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/gears.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/ar.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/ar.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/chess.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/chess.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/gps.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/gps.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/amrron.jpg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/jpeg')
-            self.end_headers()
-            with open('images/amrron.jpg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/sota.jpg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/jpeg')
-            self.end_headers()
-            with open('images/sota.jpg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/pota.jpg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/jpeg')
-            self.end_headers()
-            with open('images/pota.jpg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/ahrn.jpg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/jpeg')
-            self.end_headers()
-            with open('images/ahrn.jpg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/key.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/key.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/zombie.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/zombie.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/mail.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/mail.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
-        elif(self.path=='/heartbeat.svg'):
-            self.send_response(200)
-            self.send_header('Content-type', 'image/svg+xml')
-            self.end_headers()
-            with open('images/heartbeat.svg','r') as file:
-                img=file.read()
-            self.wfile.write(str.encode(img))
+        elif(self.path.find('/flags/')==0):
+            tmp=self.path.split('/')
+            if(len(tmp)!=3):
+                print('Bad flag request: '+self.path)
+                self.send_response(404)
+                self.end_headers()
+            else:                
+                flag=tmp[2]
+                print('Requested flag: '+flag)
+                if(exists('images/flags/'+flag)):
+                    self.send_response(200)
+                    self.send_header('Content-type','image/svg+xml')
+                    self.end_headers()
+                    with open('images/flags/'+flag,'r') as file:
+                        img=file.read()
+                    self.wfile.write(str.encode(img))
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+        elif(self.path.find('/svg/')==0):
+            tmp=self.path.split('/')
+            if(len(tmp)!=3):
+                print('Bad svg request: '+self.path)
+                self.send_response(404)
+                self.end_headers()
+            else:                
+                image=tmp[2]
+                print('Requested svg: '+image)
+                if(exists('images/'+image)):
+                    self.send_response(200)
+                    self.send_header('Content-type','image/svg+xml')
+                    self.end_headers()
+                    with open('images/'+image,'r') as file:
+                        img=file.read()
+                    self.wfile.write(str.encode(img))
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+        elif(self.path.find('/jpg/')==0):
+            tmp=self.path.split('/')
+            if(len(tmp)!=3):
+                print('Bad jpg request: '+self.path)
+                self.send_response(404)
+                self.end_headers()
+            else:                
+                image=tmp[2]
+                print('Requested jpg: '+image)
+                if(exists('images/'+image)):
+                    self.send_response(200)
+                    self.send_header('Content-type','image/jpeg')
+                    self.end_headers()
+                    with open('images/'+image,'rb') as file:
+                        img=file.read()
+                    self.wfile.write(img)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
         elif(self.path=='/colors'):
             self.send_response(200)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-type','application/json')
             self.end_headers()
             self.wfile.write(str.encode(json.dumps(colors)))
         elif(self.path=='/stations'):
             self.send_response(200)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-type','application/json')
             self.end_headers()
             with stations_lock:
                 self.wfile.write(str.encode(json.dumps(stations)))
         elif(self.path=='/traffic'):
             self.send_response(200)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-type','application/json')
             self.end_headers()
             with traffic_lock:
                 self.wfile.write(str.encode(json.dumps(list(filter(lambda r: r['type']=='RX.DIRECTED',traffic)))))
@@ -643,8 +702,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                                     grids[fmcall]=tmp[3]
                     if(rx['type']=='RX.DIRECTED'):
                         rx['from_country']=call_country(fmcall)
+                        rx['from_flag']=call_flag(fmcall)
                         if(tocall and not(toat)):
                             rx['to_country']=call_country(tocall)
+                            rx['to_flag']=call_flag(tocall)
                         else:
                             rx['to_country']=False
                         if(calls):
@@ -844,8 +905,8 @@ if(__name__ == '__main__'):
     calls={}
     if(exists('EN.dat')):
         print('Loading callsign records...')
-        with open('EN.dat', 'r', encoding='utf8') as ham_file:
-            ham_reader=csv.reader(ham_file, delimiter='|')
+        with open('EN.dat','r',encoding='utf8') as ham_file:
+            ham_reader=csv.reader(ham_file,delimiter='|')
             for row in ham_reader:
                 call=row[4]
                 name=row[7]
@@ -860,7 +921,7 @@ if(__name__ == '__main__'):
     if(exists('arrl.cty')):
         print('Loading country prefixes...')
         country=False
-        cty=open('arrl.cty', 'r', encoding='utf8')
+        cty=open('arrl.cty','r',encoding='utf8')
         for line in cty:
             if(line[0]!='&'):
                 tmp=line.split(':')
@@ -881,8 +942,8 @@ if(__name__ == '__main__'):
     friends={}
     if(exists('friends.dat')):
         print('Loading friend records...')
-        with open('friends.dat', 'r', encoding='utf8') as friend_file:
-            friend_reader=csv.reader(friend_file, delimiter=',')
+        with open('friends.dat','r',encoding='utf8') as friend_file:
+            friend_reader=csv.reader(friend_file,delimiter=',')
             for row in friend_reader:
                 call=row[0].upper()
                 name=row[1]
@@ -895,10 +956,10 @@ if(__name__ == '__main__'):
 #    pdb.set_trace()
     if(localhost):
         print('Running web server on localhost only...')
-        httpd=HTTPServer(('127.0.0.1', listen), SimpleHTTPRequestHandler)
+        httpd=HTTPServer(('127.0.0.1',listen),SimpleHTTPRequestHandler)
     else:
         print('Running web server on all interfaces...')
-        httpd=HTTPServer(('0.0.0.0', listen), SimpleHTTPRequestHandler)
+        httpd=HTTPServer(('0.0.0.0',listen),SimpleHTTPRequestHandler)
     httpd.serve_forever()
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -280,31 +280,18 @@ There are several scripts bundled with the library that show how to do various t
 
 ## Distributed Data Collection and Web Interface
 
-It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time.
+It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time. Also note that at this time, the web server MUST be run from the same directory as all of it's files (JSON files, images, etc). It's not yet smart enough to go look in the "right place" for these resources.
 
 ### Aggregator
 aggregator.py is the heart of the system. The aggregator receives JS8Call data from the collectors, processes it and stores it, then makes it available via a REST-ish interface as JSON data for consumers (such as the monitor, below). This data can also be consumed by your own API scripts. The purpose of the aggregator is to accept data from as many collectors (tied to as many radios) as you wish. These might be your own radios, or those of a group working together. The aggregator listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN. The same port is also used for extracting the collected data for display or analysis.
 
-In order to run these scripts, you'll need to install the yattag python library and the graphviz software package (the web interface generates connectivity graphs of all the observed stations, though the web interface does not yet actually display these images - it's on the to-do list).
+In order to run these scripts, you'll need to install the yattag python library. To install this library, run one of these (depending on where you want the libraries installed):
 
-To install the python library, run one of these (depending on where you want the libraries installed):
 ```
 pip3 install yattag
 ```
 ```
 sudo pip3 install yattag
-```
-
-Installing graphviz will vary across operating systems, but should generally be something similar to the following:
-
-```
-sudo apt install graphviz
-```
-```
-sudo yum install graphviz
-```
-```
-brew install graphviz
 ```
 
 ### Collector
@@ -338,8 +325,14 @@ https://www.country-files.com/category/contest/
 (in process...)
 
 * Neither the core library nor the GUI properly handle relays.
+* The web interface must be run from it's "extraction directory" (ie, it's not yet smart enough to install these files in the right place and run from anywhere).
 * Does not delete old/expired traffic without a browser reload.
 * Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
 * Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
+* Colors in friends file are being ignored.
+
+### Credits
+
+* The beautiful flag icons are from the project: https://github.com/lipis/flag-icons

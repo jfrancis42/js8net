@@ -332,7 +332,9 @@ https://www.country-files.com/category/contest/
 * Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
 * Colors in friends file are being ignored.
+* Document the arrl.cty feature.
 
 ### Credits
 
 * The beautiful flag icons are from the project: https://github.com/lipis/flag-icons
+* The country callsign mapping is courtesy of: https://www.country-files.com/

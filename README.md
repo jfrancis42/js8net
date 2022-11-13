@@ -318,8 +318,6 @@ ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
 At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for non-USA call info. For now, the web interface is somewhat USA-centric.
 
 
-https://www.country-files.com/category/contest/
-
 ### Known Issues (ie, Bugs)
 
 (in process...)
@@ -339,4 +337,5 @@ https://www.country-files.com/category/contest/
 ### Credits
 
 * The beautiful flag icons are from the project: https://github.com/lipis/flag-icons
-* The country callsign mapping is courtesy of: https://www.country-files.com/
+* The country callsign mapping is courtesy of: https://www.country-files.com/category/contest/
+* The SVG icons are from Creative Commons and Font Awesome Free.

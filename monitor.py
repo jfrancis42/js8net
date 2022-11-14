@@ -555,6 +555,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             else:                
                 flag=tmp[2]
                 print('Requested flag: '+flag)
+                if(flag=='null' or not(flag)):
+                    flag='xx.svg'
                 if(exists('images/flags/'+flag)):
                     self.send_response(200)
                     self.send_header('Content-type','image/svg+xml')

@@ -29,6 +29,7 @@ import pyproj
 
 global max_age
 global listen
+global basedir
 
 global calls
 global prefixes
@@ -48,6 +49,8 @@ stations={}
 stations_lock=threading.Lock()
 global grids
 grids={}
+global image_lock
+image_lock=threading.Lock()
 
 global eom
 global error
@@ -120,6 +123,19 @@ css+='}'
 css+='.styled-table tbody tr:last-of-type {'
 css+='    border-bottom: 2px solid '+colors['border_bottom_last']+';'
 css+='}'
+css+='* {';
+css+='    margin: 0;';
+css+='    padding: 0;';
+css+='}';
+css+='.imgbox {';
+css+='    display: grid;';
+css+='    height: 100%;';
+css+='}';
+css+='.center-fit {';
+css+='    max-width: 100%;';
+css+='    max-height: 100vh;';
+css+='    margin: auto;';
+css+='}';
 
 prefixes=[['1A','Sov Mil Order of Malta'],['3A','Monaco'],['3B6','Agalega & St. Brandon'],['3B7','Agalega & St. Brandon'],
           ['3B8','Mauritius'],['3B9','Rodriguez Island'],['3C','Equatorial Guinea'],['3C0','Annobon Island'],
@@ -493,17 +509,28 @@ def call_info(call):
 
 def main_page ():
     global css
+    global basedir
     doc,tag,text=Doc().tagtext()
     with tag('html',lang='en'):
         with tag('head'):
             with tag('style'):
                 text(css)
         with tag('body'):
-            with open('monitor.js','r') as file:
+            with open(basedir+'monitor.js','r') as file:
                 js=file.read()
             with tag('script',type='text/javascript'):
                 doc.asis(js)
             with tag('div',id='wrapper'):
+                with tag('h1'):
+                    text('Connections')
+                with tag('table',id='connections',klass='styled-table'):
+                    with tag('tr'):
+                        with tag('td'):
+                            with tag('div',klass='imgbox'):
+                                with tag('img',id='c-img',klass='center-fit',src='/connections/'+str(time.time())+'.jpg'):
+                                    pass
+                with tag('br'):
+                    pass
                 with tag('h1'):
                     text('Stations')
                 with tag('table',id='stations',klass='styled-table'):
@@ -541,6 +568,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global stations
         global stations_lock
         global version
+        global image_lock
         doc,tag,text=Doc().tagtext()
         if(self.path=='/'):
             self.send_response(200)
@@ -561,7 +589,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type','image/svg+xml')
                     self.end_headers()
-                    with open('images/flags/'+flag,'r') as file:
+                    with open(basedir+'images/flags/'+flag,'r') as file:
                         img=file.read()
                     self.wfile.write(str.encode(img))
                 else:
@@ -580,7 +608,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type','image/svg+xml')
                     self.end_headers()
-                    with open('images/'+image,'r') as file:
+                    with open(basedir+'images/'+image,'r') as file:
                         img=file.read()
                     self.wfile.write(str.encode(img))
                 else:
@@ -599,12 +627,21 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type','image/jpeg')
                     self.end_headers()
-                    with open('images/'+image,'rb') as file:
+                    with open(basedir+'images/'+image,'rb') as file:
                         img=file.read()
                     self.wfile.write(img)
                 else:
                     self.send_response(404)
                     self.end_headers()
+        elif(self.path.find('/connections/')==0):
+            print('Requested connections')
+            self.send_response(200)
+            self.send_header('Content-type','image/jpeg')
+            self.end_headers()
+            with image_lock:
+                with open(basedir+'traffic.jpg','rb') as file:
+                    img=file.read()
+            self.wfile.write(img)
         elif(self.path=='/friends'):
             self.send_response(200)
             self.send_header('Content-type','application/json')
@@ -612,7 +649,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if(exists('friends.dat')):
                 friends={}
                 print('Loading friend records...')
-                with open('friends.dat','r',encoding='utf8') as friend_file:
+                with open(basedir+'friends.dat','r',encoding='utf8') as friend_file:
                     friend_reader=csv.reader(friend_file,delimiter=',')
                     for row in friend_reader:
                         friends[row[0].upper()]=[row[1],row[2]]
@@ -625,7 +662,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             if(exists('colors.dat')):
                 print('Loading colors...')
-                with open('colors.dat','r',encoding='utf8') as colors_file:
+                with open(basedir+'colors.dat','r',encoding='utf8') as colors_file:
                     colors_reader=csv.reader(colors_file,delimiter=',')
                     for row in colors_reader:
                         colors[row[0]]=row[1]
@@ -806,31 +843,38 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 print('Sending null command...')
                 self.wfile.write(str.encode(json.dumps({'cmd':False})))
 
-def housekeeping_thread(name):
+def graph_thread(name):
     global traffic
     global traffic_lock
-    global stations
-    global stations_lock
     global max_age
-    global commands
-    global commands_lock
+    global basedir
     while(True):
-        time.sleep(31)
-        now=time.time()
+        time.sleep(30)
+        print('Generating new traffic image...')
         with traffic_lock:
-            traffic=list(filter(lambda n: n['time'] > now-max_age,traffic))
-            f=open('/tmp/traffic.json','w')
-            f.write(json.dumps(traffic))
-            f.write('\n')
-            f.close()
-        with stations_lock:
-            for u in list(stations.keys()):
-                if(stations[u]['time'] < now-max_age):
-                    del(stations[u])
-            f=open('/tmp/stations.json','w')
-            f.write(json.dumps(stations))
-            f.write('\n')
-            f.close()
+            with image_lock:
+                stuff=[]
+                for tfc in traffic:
+                    if(tfc['type']=='RX.DIRECTED' and tfc['time']>=time.time()-max_age):
+                        if('FROM' in tfc['params'] and 'TO' in tfc['params']):
+                            if(tfc['params']['TO']!='@HB' and tfc['params']['TO']!='@ALLCALL'):
+                                if(tfc['params']['TO'][0]=='@'):
+                                    stuff.append([(tfc['params']['FROM'].split('/'))[0],
+                                                  (tfc['params']['TO'].split('/'))[0]])
+                                else:
+                                    stuff.append([(tfc['params']['FROM'].split('/'))[0],
+                                                  (tfc['params']['TO'].split('/'))[0]])
+                u=[]
+                for s in stuff:
+                    if(s not in u):
+                        u.append(s)
+                f=open('traffic.dot','w')
+                f.write('digraph {\n')
+                for tfc in u:
+                    f.write('  "'+tfc[0]+'" -> "'+tfc[1]+'";\n')
+                f.write('}\n')
+                f.close()        
+        os.system('dot -Tjpg '+basedir+'traffic.dot -o '+basedir+'traffic.jpg')
 
 def housekeeping_thread(name):
     global traffic
@@ -864,6 +908,7 @@ def housekeeping_thread(name):
 if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description='Aggregate collected JS8call data from collectors.')
     parser.add_argument('--listen',default=False,help='Listen port for collector traffic (default 8000)')
+    parser.add_argument('--basedir',default=False,help='Monitor program directory (default is current directory)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
     parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)',
                         action='store_true')
@@ -875,6 +920,13 @@ if(__name__ == '__main__'):
     else:
         listen=8000
     print('Listening on port: '+str(listen))
+
+    if(args.basedir):
+        basedir=args.basedir
+        if(basedir[-1]!='/'):
+           basedir=basedir+'/'
+    else:
+        basedir='./'
 
     if(args.max_age):
         max_age=int(args.max_age)
@@ -909,11 +961,13 @@ if(__name__ == '__main__'):
     
     thread0=Thread(target=housekeeping_thread,args=('Housekeeping Thread',),daemon=True)
     thread0.start()
+    thread1=Thread(target=graph_thread,args=('Graph Thread',),daemon=True)
+    thread1.start()
     
     calls={}
     if(exists('EN.dat')):
         print('Loading callsign records...')
-        with open('EN.dat','r',encoding='utf8') as ham_file:
+        with open(basedir+'EN.dat','r',encoding='utf8') as ham_file:
             ham_reader=csv.reader(ham_file,delimiter='|')
             for row in ham_reader:
                 call=row[4]
@@ -929,7 +983,7 @@ if(__name__ == '__main__'):
     if(exists('arrl.cty')):
         print('Loading country prefixes...')
         country=False
-        cty=open('arrl.cty','r',encoding='utf8')
+        cty=open(basedir+'arrl.cty','r',encoding='utf8')
         for line in cty:
             if(line[0]!='&'):
                 tmp=line.split(':')
@@ -950,7 +1004,7 @@ if(__name__ == '__main__'):
     friends={}
     if(exists('friends.dat')):
         print('Loading friend records...')
-        with open('friends.dat','r',encoding='utf8') as friend_file:
+        with open(basedir+'friends.dat','r',encoding='utf8') as friend_file:
             friend_reader=csv.reader(friend_file,delimiter=',')
             for row in friend_reader:
                 friends[row[0].upper()]=[row[1],row[2]]

@@ -10,7 +10,6 @@ test.py
 *~
 EN.dat
 traffic.dot
-traffic.jpg
 old/*
 sync.sh
 reverse_sync.sh
@@ -19,4 +18,4 @@ start_*.sh
 rx.sh
 tx.sh
 arrl.cty
-		
+

@@ -285,13 +285,25 @@ It's important to note that this part of the software is still very much in the 
 ### Aggregator
 aggregator.py is the heart of the system. The aggregator receives JS8Call data from the collectors, processes it and stores it, then makes it available via a REST-ish interface as JSON data for consumers (such as the monitor, below). This data can also be consumed by your own API scripts. The purpose of the aggregator is to accept data from as many collectors (tied to as many radios) as you wish. These might be your own radios, or those of a group working together. The aggregator listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN. The same port is also used for extracting the collected data for display or analysis.
 
-In order to run these scripts, you'll need to install the yattag python library. To install this library, run one of these (depending on where you want the libraries installed):
+In order to run these scripts, you'll need to install the yattag and maidenhead python libraries. To install these on a linux or OS/X system, run one of these commands (depending on where you want the libraries installed):
 
 ```
-pip3 install yattag
+pip3 install yattag maidenhead
 ```
 ```
-sudo pip3 install yattag
+sudo pip3 install yattag maidenhead
+```
+
+You'll also need the graphviz software package in order to create connectivity graphs. To install this package on a linux or OS/X system, you'll run something similar to the following (your friendly neighborhood search engine will help if these don't work):
+
+```
+sudo apt install graphviz
+```
+```
+sudo yum install graphviz
+```
+```
+brew install graphviz
 ```
 
 ### Collector
@@ -322,12 +334,10 @@ At some point, I anticipate the option of querying one of the many callsign webp
 
 #### Bugs to be Fixed
 
-* The web interface must be run from it's "extraction directory" (ie, it's not yet smart enough to install these files in the right place and run from anywhere).
 * Does not delete old/expired traffic without a browser reload.
 * Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
-* Timezone in the javascript is hard-coded to Mountain Time (my time zone) because the collector is marking time in local time, not UTC.
-* I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought cheap at a used book store on a recent trip. In other words, it's my first ever Javascript project. So if you notice that the Javascript sucks, that's why.
+* I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought at a used book store on a recent road trip. In other words, it's my first ever Javascript project. So if you notice that my Javascript sucks even more than typical Javascript, that's why.
 
 #### Features to be Added
 
@@ -336,11 +346,12 @@ At some point, I anticipate the option of querying one of the many callsign webp
 * Neither the core library nor the GUI properly handle relays.
 * Document the arrl.cty feature.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
-* Not all of the flags are 100% correct. I think I have all the countries right, but a lot of the territories and islands are still 'xx' (ie, undefined). I'll fill these in as I get time.
+* Not all of the country flags are 100% correct. I think I have all the actual countries right, but a lot of the territories and islands are still 'xx' (ie, undefined) until I get 2-3 hours some boring evening to look them all up.
 
 ### Credits
 
 * The beautiful flag icons are from the project: https://github.com/lipis/flag-icons
 * The country callsign mapping is courtesy of: https://www.country-files.com/category/contest/
 * The SVG icons are from Creative Commons and Font Awesome Free.
-* COAS Book in Las Cruces, NM for being awesome.
+* Thanks to COAS Book in Las Cruces, NM for being awesome. https://www.coasbooks.com/
+* Javascript is a truly horrifying language. Not sure who to thank for that.

@@ -84,13 +84,9 @@ var first_time=true;
 
 // Build the table contents page.
 var intervalId=setInterval(async function() {
-    // age todo: fix timezone issue. collector is stamping in local
-    // time, not UTC, so we have to fix below with a fixed (nasty)
-    // offset
-    var now=new Date();
-    var utcMilllisecondsSinceEpoch=now.getTime()+(now.getTimezoneOffset()*60*1000);
-    var utcSecondsSinceEpoch=Math.round(utcMilllisecondsSinceEpoch/1000);
-    
+    // age
+    now=Math.floor(Date.now()/1000)
+
     if(first_time) {
 	// Get the color JSON.
 	console.log('Fetching /colors');
@@ -115,7 +111,7 @@ var intervalId=setInterval(async function() {
 	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	stations=JSON.parse(station_stuff);
-    } else if(utcSecondsSinceEpoch%5==0) {
+    } else if(now%5==0) {
 	// Get the station JSON.
 	console.log('Fetching /stations');
 	var station_response=await fetch('/stations');
@@ -125,6 +121,11 @@ var intervalId=setInterval(async function() {
 	stations=JSON.parse(station_stuff);
     }
     
+    if(now%30==0) {
+	console.log('Fetching connections image');
+	document.getElementById("c-img").src='/connections/'+now+'.jpg';
+    }
+
     if(first_time) {
 	// Find the 'stations' table.
 	var table=document.getElementById('stations');
@@ -157,10 +158,9 @@ var intervalId=setInterval(async function() {
     for (var key in stations) {
 	if (stations.hasOwnProperty(key)) {
 	    var row=document.getElementById(key);
-	    var age=Math.round(utcSecondsSinceEpoch-stations[key].time-25200);
+	    var age=Math.round(now-stations[key].time);
 	    // todo: this shouldn't be a fixed time
 	    if(age<=3600) {
-//		console.log(stations[key].radio+': '+age+' sec');
 		var new_row=false;
 		if(!row) {
 		    row=table.insertRow(0);
@@ -231,7 +231,7 @@ var intervalId=setInterval(async function() {
 	
 	// Convert the text into JSON. todo: shouldn't have to do this.
 	traffic=JSON.parse(traffic_stuff);
-    } else if(utcSecondsSinceEpoch%5==0) {
+    } else if(now%5==0) {
 	// Get the traffic JSON.
 	console.log('Fetching /traffic');
 	var traffic_response=await fetch('/traffic');
@@ -374,15 +374,19 @@ var intervalId=setInterval(async function() {
 	    // age todo: fix timezone issue. collector is stamping in local time, not UTC
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200)*1000).toISOString().substr(11, 8);
+		cell.innerHTML=new Date(Math.round(now-rx.time)*1000).toISOString().substr(11, 8);
 	    } else {
-		row.cells[5].innerHTML=new Date(Math.round(utcSecondsSinceEpoch-rx.time-25200)*1000).toISOString().substr(11, 8);
+		row.cells[5].innerHTML=new Date(Math.round(now-rx.time)*1000).toISOString().substr(11, 8);
 	    }
 	    
 	    // SNR
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML=rx.snr;
+		if(rx.snr>0) {
+		    cell.innerHTML='+'+rx.snr;
+		} else {
+		    cell.innerHTML=rx.snr;
+		}
 		if(rx.snr>0) {
 		    cell.style.backgroundColor=colors.snr_supergreen;
 		} else if(rx.snr>=-10 && rx.snr<=0) {
@@ -426,9 +430,14 @@ var intervalId=setInterval(async function() {
 		} else if(rx.to_call=='@ARFCOM') {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/ar.svg';
-		} else if(rx.to_call=='@AMRRON') {
+		} else if(rx.to_call=='@AMRRON' || rx.to_call=='@AMCON' ||
+			  rx.to_call=='@AMRBB' || rx.to_call=='@AMRRFTX' ||
+			  rx.to_call=='@AMRFTX' || rx.to_call=='@AMRNFTX') {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/amrron.jpg';
+		} else if(rx.to_call=='@CORAC') {
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
+		    img='/jpg/corac.jpg';
 		} else if(tmp[2]=='HEARTBEAT' || rx.to_call=='@HB') {
 		    cell.style.backgroundColor=colors.heartbeat;
 		    img='/svg/zombie.svg'
@@ -447,6 +456,9 @@ var intervalId=setInterval(async function() {
 		} else if(rx.to_call=='@JS8CHESS') {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/chess.svg';
+		} else if(rx.to_call=='@SKYWARN') {
+		    cell.style.backgroundColor=colors.non_zombie_traffic;
+		    img='/svg/tornado.svg';
 		} else if(rx.to_call=='@APRSIS' && tmp[3]==':SMSGTE') {
 		    cell.style.backgroundColor=colors.cq;
 		    img='/svg/sms.svg';

@@ -401,7 +401,18 @@ var intervalId=setInterval(async function() {
 	    // speed
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML=english_speed(rx.speed);
+		var spd_img=false
+		if(rx.speed==0) {
+		    spd_img='/svg/transporter.svg';
+		} else if(rx.speed==1) {
+		    spd_img='/svg/mustang.svg';
+		} else if(rx.speed==2) {
+		    spd_img='/svg/911.svg';
+		} else if(rx.speed==4) {
+		    spd_img='/svg/kaefer.svg';
+		}
+		cell.innerHTML='<img src=\"'+spd_img+'\" width=\"24\" height=\"auto\"/>&nbsp;&nbsp;'+
+		    english_speed(rx.speed);
 	    }
 	    
 	    // frequency

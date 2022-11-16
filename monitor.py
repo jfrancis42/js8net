@@ -848,6 +848,7 @@ def graph_thread(name):
     global traffic_lock
     global max_age
     global basedir
+    global friends
     while(True):
         time.sleep(30)
         print('Generating new traffic image...')
@@ -865,6 +866,7 @@ def graph_thread(name):
                                     stuff.append([(tfc['params']['FROM'].split('/'))[0],
                                                   (tfc['params']['TO'].split('/'))[0]])
                 u=[]
+                c=set()
                 for s in stuff:
                     if(s not in u):
                         u.append(s)
@@ -872,6 +874,11 @@ def graph_thread(name):
                 f.write('digraph {\n')
                 for tfc in u:
                     f.write('  "'+tfc[0]+'" -> "'+tfc[1]+'";\n')
+                    c.add(tfc[0])
+                    c.add(tfc[1])
+                for fr in list(c):
+                    if fr in friends:
+                        f.write('  "'+fr+'" [style=filled fillcolor="'+friends[fr][1]+'"]\n')
                 f.write('}\n')
                 f.close()        
         os.system('dot -Tjpg '+basedir+'traffic.dot -o '+basedir+'traffic.jpg')

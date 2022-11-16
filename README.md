@@ -347,6 +347,7 @@ At some point, I anticipate the option of querying one of the many callsign webp
 * Document the arrl.cty feature.
 * Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
 * Not all of the country flags are 100% correct. I think I have all the actual countries right, but a lot of the territories and islands are still 'xx' (ie, undefined) until I get 2-3 hours some boring evening to look them all up.
+* Should probably rebuild all of this in react.js at some point. But for now, it works.
 
 ### Credits
 

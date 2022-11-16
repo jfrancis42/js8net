@@ -363,9 +363,9 @@ var intervalId=setInterval(async function() {
 		    var brg=Math.round(bearing(stations[rx.uuid]['lat'],stations[rx.uuid]['lon'],
 						   rx.lat,rx.lon));
 		    cell.innerHTML=dist+' mi @ '+brg+' deg';
-		    // Highlight anyone within 100 mi. todo: Should
+		    // Highlight anyone within 150 mi. todo: Should
 		    // probably make this an adjustable parameter.
-		    if(dist<=100) {
+		    if(dist<=150) {
 			cell.style.backgroundColor=colors.close;
 		    }
 		}

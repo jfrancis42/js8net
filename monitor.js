@@ -491,5 +491,11 @@ var intervalId=setInterval(async function() {
 	    }
 	}
     }
+
+    var r=document.getElementById('traffic');
+    for(let i=l; i<r.rows.length; i++) {
+	r.deleteRow(i);
+    }
+
     first_time=false
 }, 1000);

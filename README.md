@@ -334,7 +334,6 @@ At some point, I anticipate the option of querying one of the many callsign webp
 
 #### Bugs to be Fixed
 
-* Does not delete old/expired traffic without a browser reload.
 * Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
 * Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
 * I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought at a used book store on a recent road trip. In other words, it's my first ever Javascript project. So if you notice that my Javascript sucks even more than typical Javascript, that's why.

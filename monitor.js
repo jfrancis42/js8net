@@ -426,10 +426,11 @@ var intervalId=setInterval(async function() {
 		var cell=row.insertCell(-1);
 		var tmp=rx.text.split(' ');
 		var img=false;
+		var khz=rx.freq/1000.0;
 		if(tmp[2]=='INFO' && tmp[3].search('CC=')!=-1) {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/ahrn.jpg';
-		} else if(rx.to_call=='@AHRN') {
+		} else if(rx.to_call=='@AHRN' || rx.to_call=='@AMCON') {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/ahrn.jpg';
 		} else if(rx.to_call=='@SOTA') {
@@ -441,9 +442,12 @@ var intervalId=setInterval(async function() {
 		} else if(rx.to_call=='@ARFCOM') {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/svg/ar.svg';
-		} else if(rx.to_call=='@AMRRON' || rx.to_call=='@AMCON' ||
-			  rx.to_call=='@AMRBB' || rx.to_call=='@AMRRFTX' ||
-			  rx.to_call=='@AMRFTX' || rx.to_call=='@AMRNFTX') {
+		} else if(rx.to_call=='@AMRRON' || rx.to_call=='@AMRBB' ||
+			  rx.to_call=='@AMRRFTX' || rx.to_call=='@AMRFTX' ||
+			  rx.to_call=='@AMRNFTX' ||
+			  (khz >= 3588 && khz <= 5392) ||
+			  (khz >= 7110 && khz <= 7114) ||
+			  (khz >= 14110 && khz <= 14114)) {
 		    cell.style.backgroundColor=colors.non_zombie_traffic;
 		    img='/jpg/amrron.jpg';
 		} else if(rx.to_call=='@CORAC') {

@@ -340,7 +340,7 @@ At some point, I anticipate the option of querying one of the many callsign webp
 
 #### Features to be Added
 
-* Add an adjustable parameter for the "close" highlighting (currently fixed at 100mi)
+* Add an adjustable parameter for the "close" highlighting (currently fixed at 150mi)
 * Add metric option (for countries who've never sent people to walk around on the moon).
 * Neither the core library nor the GUI properly handle relays.
 * Document the arrl.cty feature.

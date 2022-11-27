@@ -51,6 +51,8 @@ global rx_text
 global last_rx
 global mycall
 global messages
+global call_activity
+global band_activity
 
 spots={}
 unique=0
@@ -228,6 +230,8 @@ def rx_thread(name):
     global ptt
     global tx_text
     global rx_text
+    global call_activity
+    global band_activity
     n=0
     left=False
     empty=True
@@ -309,19 +313,20 @@ def rx_thread(name):
                         # watch for incoming text to take his own
                         # action.
                         rx_text=message['value']
+                    elif(message['type']=="RX.CALL_ACTIVITY"):
+                        processed=True
+                        call_activity=message['params']
+                    elif(message['type']=="RX.BAND_ACTIVITY"):
+                        processed=True
+                        band_activity=message['params']
                     elif(message['type']=="RX.SPOT"):
-                        # Note that we don't mark this as 'processed'
-                        # (even though it is), as the user may want to
-                        # watch for incoming spots to take his own
-                        # action.
                         processed=True
                     # The following message types are delivered to the
                     # rx_queue for user processing (though some of
                     # them are also internally processed):
                     # RX.DIRECTED, RX.ACTIVITY, RX.SPOT,
-                    # RX.CALL_ACTIVITY, RX.GET_BAND_ACTIVITY,
-                    # RX.TEXT. If any other messages show up in the
-                    # queue, it's a bug.
+                    # RX.BAND_ACTIVITY, RX.TEXT. If any other messages
+                    # show up in the queue, it's a bug.
                     if(not(processed)):
                         with rx_lock:
                            rx_queue.put(message)
@@ -508,7 +513,15 @@ def set_info(info):
 
 def get_call_activity():
     # Get the contents of the right white box.
+    global call_activity
+    call_activity=False
     queue_message({"params":{},"type":"RX.GET_CALL_ACTIVITY","value":""})
+    now=time.time()
+    while(not(call_activity)):
+        if(time.time()>now+timeout):
+            return(False)
+        time.sleep(0.1)
+    return(call_activity)
 
 def get_call_selected():
     # Never quite figured out what this does. I assume based on the
@@ -519,7 +532,15 @@ def get_call_selected():
 
 def get_band_activity():
     # Get the contents of the left white box.
+    global band_activity
+    band_activity=False
     queue_message({"params":{},"type":"RX.GET_BAND_ACTIVITY","value":""})
+    now=time.time()
+    while(not(band_activity)):
+        if(time.time()>now+timeout):
+            return(False)
+        time.sleep(0.1)
+    return(band_activity)
 
 def get_rx_text():
     # Get the contents of the yellow window.

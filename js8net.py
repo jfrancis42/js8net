@@ -315,10 +315,16 @@ def rx_thread(name):
                         rx_text=message['value']
                     elif(message['type']=="RX.CALL_ACTIVITY"):
                         processed=True
-                        call_activity=message['params']
+                        tmp=message['params']
+                        if('_ID' in tmp):
+                            del(tmp['_ID'])
+                        call_activity=tmp
                     elif(message['type']=="RX.BAND_ACTIVITY"):
                         processed=True
-                        band_activity=message['params']
+                        tmp=message['params']
+                        if('_ID' in tmp):
+                            del(tmp['_ID'])
+                        band_activity=tmp
                     elif(message['type']=="RX.SPOT"):
                         processed=True
                     # The following message types are delivered to the

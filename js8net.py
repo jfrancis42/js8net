@@ -215,6 +215,45 @@ def tx_thread(name):
             s.sendall(bytes(thing+"\r\n",'utf-8'))
         time.sleep(0.25)
 
+# Station class for RX.CALL_ACTIVITY
+class Callstation:
+    def __init__(self,call,stuff):
+        self.call=call
+        self.snr=stuff['SNR']
+        self.utc=stuff['UTC']/1000
+        if(stuff['GRID']==''):
+            self.grid=False
+        else:
+            self.grid=stuff['GRID'].strip()
+
+    def age(self):
+        return(round(time.time()-self.utc))
+
+    def string(self):
+        if(self.grid):
+            return('Call: '+self.call+'\tSNR: '+str(self.snr)+'  \tAge: '+str(self.age())+
+                  '  \tGrid: '+str(self.grid))
+        else:
+            return('Call: '+self.call+'\tSNR: '+str(self.snr)+'  \tAge: '+str(self.age()))
+
+# Station class for RX.BAND_ACTIVITY
+class Bandstation:
+    def __init__(self,stuff):
+        self.dial=stuff['DIAL']
+        self.freq=stuff['FREQ']
+        self.offset=stuff['OFFSET']
+        self.snr=stuff['SNR']
+        self.text=stuff['TEXT']
+        self.utc=stuff['UTC']/1000
+
+    def age(self):
+        return(round(time.time()-self.utc))
+
+    def string(self):
+        return('Freq: '+str(self.freq/1000)+' khz ('+str(self.dial/1000)+' khz + '+
+               str(self.offset)+' hz)  \tSNR: '+str(self.snr)+'  \tAge: '+
+               str(self.age())+'  \t Text: '+str(self.text))
+
 # Due to the way JS8Call sends data to an API client (ie, it just
 # sends random JSON data whenever it pleases), we'll receive all
 # messages in a thread so it'll all work in the background.
@@ -318,13 +357,15 @@ def rx_thread(name):
                         tmp=message['params']
                         if('_ID' in tmp):
                             del(tmp['_ID'])
-                        call_activity=tmp
+                        stations=list(map(lambda c: Callstation(c,tmp[c]),list(tmp.keys())))
+                        call_activity=stations
                     elif(message['type']=="RX.BAND_ACTIVITY"):
                         processed=True
                         tmp=message['params']
                         if('_ID' in tmp):
                             del(tmp['_ID'])
-                        band_activity=tmp
+                        stations=list(map(lambda c: Bandstation(tmp[c]),list(tmp.keys())))
+                        band_activity=stations
                     elif(message['type']=="RX.SPOT"):
                         processed=True
                     # The following message types are delivered to the
@@ -533,7 +574,7 @@ def get_call_selected():
     # Never quite figured out what this does. I assume based on the
     # name that it returns the value of whichever callsign has been
     # clicked on in the right window, but I haven't gotten 'round to
-    # testing this theory.
+    # testing this theory. ToDo: figure this out
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
 
 def get_band_activity():

@@ -44,12 +44,23 @@ def update_thread(name):
     global myfreq
     global myspeed
     print(name+' started...')
+    last=time.time()
     while(True):
         with station_lock:
             mycall=get_callsign()
             mygrid=get_grid()
             myfreq=get_freq()
             myspeed=get_speed()
+        if(time.time()>=last+30):
+            last=time.time()
+            act=get_call_activity() # todo: finish/test
+            if(act):
+                stuff=[]
+                for a in act:
+                    stuff.append({'call':a.call,'snr':a.snr,'utc':a.utc,'grid':a.grid})
+                res=requests.post('http://'+aggregator+'/grids',json={'grids':stuff})
+                print(res)
+                res.close()
         time.sleep(5.0)
 
 def traffic_thread(name):

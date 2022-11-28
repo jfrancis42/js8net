@@ -698,10 +698,19 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global calls
         global prefixes
         global id
+        global grids
         content_length=int(self.headers['Content-Length'])
         payload=self.rfile.read(content_length).decode('utf8')
         j=json.loads(payload)
         print('payload: '+payload)
+        if(self.path=='/grids'):
+            # ToDo: Also pull out SNR here.
+            self.send_response(200)
+            self.end_headers()
+            if('grids' in j):
+                for s in j['grids']:
+                    if(s['grid']):
+                        grids[s['call']]=s['grid']
         if(self.path=='/cmd'):
             with commands_lock:
                 self.send_response(200)

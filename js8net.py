@@ -559,7 +559,7 @@ def set_info(info):
     return(get_info())
 
 def get_call_activity():
-    # Get the contents of the right white box.
+    # Get the contents of the right white window.
     global call_activity
     call_activity=False
     queue_message({"params":{},"type":"RX.GET_CALL_ACTIVITY","value":""})
@@ -578,7 +578,7 @@ def get_call_selected():
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
 
 def get_band_activity():
-    # Get the contents of the left white box.
+    # Get the contents of the left white window.
     global band_activity
     band_activity=False
     queue_message({"params":{},"type":"RX.GET_BAND_ACTIVITY","value":""})
@@ -603,7 +603,7 @@ def get_rx_text():
     return(rx_text)
     
 def get_tx_text():
-    # Get the contents of the box below yellow window.
+    # Get the contents of the window below yellow window.
     global tx_text
     global timeout
     tx_text='-=-=-=-shibboleeth-=-=-=-'
@@ -616,7 +616,7 @@ def get_tx_text():
     return(tx_text)
 
 def set_tx_text(text):
-    # Set the contents of the box below yellow window.
+    # Set the contents of the window below yellow window.
     global tx_text
     queue_message({"params":{},"type":"TX.SET_TEXT","value":text})
     return(get_tx_text())
@@ -687,6 +687,10 @@ def query_grid(dest_call):
 def query_status(dest_call):
     # Query a station for their status.
     queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" STATUS? "})
+
+def query_info(dest_call):
+    # Query a station for their info.
+    queue_message({"params":{},"type":"TX.SEND_MESSAGE","value":dest_call+" INFO? "})
 
 def query_hearing(dest_call):
     # Query a station for top stations heard.

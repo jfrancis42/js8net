@@ -438,7 +438,7 @@ var intervalId=setInterval(async function() {
 	    // frequency
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML=rx.freq/1000.0;
+		cell.innerHTML=(rx.freq/1000.0).toFixed(3);
 	    }
 	    
 	    // text

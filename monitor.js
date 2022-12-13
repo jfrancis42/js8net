@@ -333,7 +333,7 @@ var intervalId=setInterval(async function() {
             // from map
 	    if(new_row) {
 		var cell=row.insertCell(-1);
-		cell.innerHTML='<a href="https://www.google.com/maps/place/'+rx.from_addr+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
+		cell.innerHTML='<a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(rx.from_addr)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
 	    }
 	    
             // to
@@ -380,7 +380,7 @@ var intervalId=setInterval(async function() {
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		if(rx.to_call[0]!='@') {
-		    cell.innerHTML='<a href="https://www.google.com/maps/place/'+rx.to_addr+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
+		    cell.innerHTML='<a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(rx.to_addr)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
 		} else {
 		    cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 		}

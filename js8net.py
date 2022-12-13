@@ -525,20 +525,53 @@ def send_email(address,message):
             unique=1
         send_message("@APRSIS CMD :EMAIL-2  :"+address+" "+message+"{%02d}" % unique)
 
-def send_aprs(call,message):
-    # Send an APRS message via JS8.
+def send_aprs(dest,message):
+    # Send an APRS message to the destination call. Your call is sent
+    # as configured in JS8Call. Be reasonable with the message
+    # length. I'm not certain what the length limit in APRS is, but
+    # there almost certainly is one.
+    global unique
+    global unique_lock
+    dest=dest[0:9]
+    while(len(dest)<9):
+        dest=dest+" "
+    with unique_lock:
+        unique=unique+1
+        if(unique>99):
+            unique=1
+        send_message("@APRSIS CMD :"+dest+":"+message+"{%02d}" % unique)
+
+def send_sota(summit,freq,mode,comment=False):
+    # Send a SOTA spot. freq is an integer in khz (ie, 7200, 14300,
+    # 144200).  Your call is sent as configured in JS8Call. Don't get
+    # too creative with the mode. Stick with the basics: USB, LSB,
+    # SSB, AM, FM, CW, etc, lest your message get dropped.. You must
+    # pre-register with the SOTA gateway for this to work:
+    # https://www.sotaspots.co.uk/Aprs2Sota_Info.php
     global unique
     global unique_lock
     with unique_lock:
         unique=unique+1
         if(unique>99):
             unique=1
-        send_message("@APRSIS CMD :"+call+" :"+message+"{%02d}" % unique)
+        if(comment):
+            send_message("@APRSIS CMD :APRS2SOTA:"+get_callsign()+";"+summit+";"+str(int(freq))+";"+mode+";"+comment+"{%02d}" % unique)
+        else:
+            send_message("@APRSIS CMD :APRS2SOTA:"+get_callsign()+";"+summit+";"+str(int(freq))+";"+mode+"{%02d}" % unique)
 
-def send_pota(park,freq,mode,comment):
-    # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300).
-    # Your call is sent as configured in JS8Call.
-    send_message("@APRSIS CMD :POTAGW   :"+get_callsign()+" "+park+" "+str(freq)+" "+mode+" "+comment)
+def send_pota(park,freq,mode,comment=False):
+    # Send a POTA spot. freq is an integer in khz (ie, 7200, 14300,
+    # 144200).  Your call is sent as configured in JS8Call.
+    global unique
+    global unique_lock
+    with unique_lock:
+        unique=unique+1
+        if(unique>99):
+            unique=1
+        if(comment):
+            send_message("@APRSIS CMD :POTAGW   :"+get_callsign()+" "+park+" "+str(int(freq))+" "+mode+" "+comment+"{%02d}" % unique)
+        else:
+            send_message("@APRSIS CMD :POTAGW   :"+get_callsign()+" "+park+" "+str(int(freq))+" "+mode+"{%02d}" % unique)
 
 def get_info():
     # Ask JS8Call for the configured info field.

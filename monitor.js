@@ -362,7 +362,7 @@ var intervalId=setInterval(async function() {
 		if(rx.to_call[0]!='@') {
 		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
 		} else {
-		    cell.innerHTML=''
+		    cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 		}
 	    }
 	    

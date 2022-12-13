@@ -253,9 +253,13 @@ var intervalId=setInterval(async function() {
 	thead.appendChild(document.createElement("th")).
 	    appendChild(document.createTextNode('From'));
 	thead.appendChild(document.createElement("th")).
+	    appendChild(document.createTextNode('PSKR'));
+	thead.appendChild(document.createElement("th")).
 	    appendChild(document.createTextNode('Map'));
 	thead.appendChild(document.createElement("th")).
 	    appendChild(document.createTextNode('To'));
+	thead.appendChild(document.createElement("th")).
+	    appendChild(document.createTextNode('PSKR'));
 	thead.appendChild(document.createElement("th")).
 	    appendChild(document.createTextNode('Map'));
 	thead.appendChild(document.createElement("th")).
@@ -320,10 +324,16 @@ var intervalId=setInterval(async function() {
 		}
 	    }
 
-            // from map
+            // from PSKR
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
+	    }
+	    
+            // from map
+	    if(new_row) {
+		var cell=row.insertCell(-1);
+		cell.innerHTML='<a href="https://www.google.com/maps/place/'+rx.from_addr+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
 	    }
 	    
             // to
@@ -356,11 +366,21 @@ var intervalId=setInterval(async function() {
 		}
 	    }
 	    
-            // to map
+            // to PSKR
 	    if(new_row) {
 		var cell=row.insertCell(-1);
 		if(rx.to_call[0]!='@') {
 		    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1&mapCenter=39.09371454584385,-97.249548593876,5.3519901583255205" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
+		} else {
+		    cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
+		}
+	    }
+	    
+            // to map
+	    if(new_row) {
+		var cell=row.insertCell(-1);
+		if(rx.to_call[0]!='@') {
+		    cell.innerHTML='<a href="https://www.google.com/maps/place/'+rx.to_addr+'" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
 		} else {
 		    cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 		}
@@ -396,7 +416,7 @@ var intervalId=setInterval(async function() {
 		var cell=row.insertCell(-1);
 		cell.innerHTML=new Date(Math.round(now-rx.time)*1000).toISOString().substr(11, 8);
 	    } else {
-		row.cells[7].innerHTML=new Date(Math.round(now-rx.time)*1000).toISOString().substr(11, 8);
+		row.cells[9].innerHTML=new Date(Math.round(now-rx.time)*1000).toISOString().substr(11, 8);
 	    }
 	    
 	    // SNR

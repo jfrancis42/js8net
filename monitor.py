@@ -32,6 +32,7 @@ global listen
 global basedir
 
 global calls
+global addresses
 global prefixes
 global flags
 global friends
@@ -507,6 +508,13 @@ def call_info(call):
     else:
         return(False)
 
+def call_address(call):
+    global addresses
+    if(call in addresses):
+        return(',+'.join(addresses[call]))
+    else:
+        return(False)
+
 def main_page ():
     global css
     global basedir
@@ -696,6 +704,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global error
         global commands
         global calls
+        global addresses
         global prefixes
         global id
         global grids
@@ -774,10 +783,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         if(calls):
                             if(fmcall):
                                 rx['from_info']=call_info(fmcall)
+                                rx['from_addr']=call_address(fmcall)
                             else:
                                 rx['from_info']=False
                             if(tocall and not(toat)):
                                 rx['to_info']=call_info(tocall)
+                                rx['to_addr']=call_address(tocall)
                             else:
                                 rx['to_info']=False
                         else:
@@ -981,6 +992,7 @@ if(__name__ == '__main__'):
     thread1.start()
     
     calls={}
+    addresses={}
     if(exists('EN.dat')):
         print('Loading callsign records...')
         with open(basedir+'EN.dat','r',encoding='utf8') as ham_file:
@@ -988,9 +1000,12 @@ if(__name__ == '__main__'):
             for row in ham_reader:
                 call=row[4]
                 name=row[7]
+                house=row[15]
                 city=row[16]
                 state=row[17]
+                zipcode=row[18]
                 calls[call]=[name,city,state]
+                addresses[call]=[house,city,state,zipcode]
     else:
         print('EN.dat not found, no loading callsign records...')
     print('Done.')

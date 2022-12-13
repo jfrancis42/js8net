@@ -14,7 +14,7 @@ The JS8Call API is a bit painful to use directly from your own code for several 
 
 - It's incomplete. You cannot mark INBOX messages as read (or delete them). You cannot toggle SPOT on or off. You cannot trigger a contact log. You cannot toggle TX on or off. You cannot enable or disable Autoreply, Heartbeat Networking, Heartbeat Acknowledgements, change Decoder Sensitivity, turn simultaneous decoding on or off, change callsign groups, change Station Status, change the CQ or Reply messages. I'd also love to see an API call to generate a message checksum (for a message I'm generating) and to validate the checksum of a received message.
 
-- The API is completely disconnected from the GUI. If you make a change using the API, for example changing the speed from Normal to Slow or changing your grid square, those changes are invisible in the GUI. The changes happen, but they're not reflected on the screen, leading to a very confusing state.
+- The API is completely disconnected from the GUI. If you make a change using the API, for example changing the speed from Normal to Slow or changing your grid square, those changes are partially visible in the GUI, yet don't actually change the modem speed.
 
 - API usage does not reset the idle timeout. Meaning that after the specified period of time without interacting with the GUI, all transmission stops until you click the timeout "OK" notice with a mouse. And the maximum time the timeout can be set for is only 1440 minutes (24 hours). You can get rid of this behavior by setting IDLE_BLOCKS to FALSE in the C++ source and recompiling, but recompiling JS8Call is quite painful compared with most software, and is horrifically slow on the Pi. I have an icky, but usable work-around below.
 
@@ -282,10 +282,10 @@ There are several scripts bundled with the library that show how to do various t
 
 It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time. Also note that at this time, the web server MUST be run from the same directory as all of it's files (JSON files, images, etc). It's not yet smart enough to go look in the "right place" for these resources.
 
-### Aggregator
-aggregator.py is the heart of the system. The aggregator receives JS8Call data from the collectors, processes it and stores it, then makes it available via a REST-ish interface as JSON data for consumers (such as the monitor, below). This data can also be consumed by your own API scripts. The purpose of the aggregator is to accept data from as many collectors (tied to as many radios) as you wish. These might be your own radios, or those of a group working together. The aggregator listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN. The same port is also used for extracting the collected data for display or analysis.
+### Monitor
+monitor.py provides a central process for the collectors to feed data to, and also serves the web interface to web clients. The monitor receives JS8Call data from the collectors, processes it, stores it, then serves web pages providing this information to the end user. The monitor listens on TCP port 8001 for inbound connections from collectors. While it's certainly possible to expose this port to the Internet, it's probably wiser to require collectors to connect to your site via a VPN.
 
-In order to run these scripts, you'll need to install the yattag and maidenhead python libraries. To install these on a linux or OS/X system, run one of these commands (depending on where you want the libraries installed):
+In order to run the monitor, you'll need to install the yattag and maidenhead python libraries. To install these on a linux or OS/X system, run one of these commands (depending on where you want the libraries installed):
 
 ```
 pip3 install yattag maidenhead
@@ -306,26 +306,23 @@ sudo yum install graphviz
 brew install graphviz
 ```
 
+monitor.py provides the web interface on TCP port 8000. While the port is configurable, in Linux and other unix-derived operating systems, ports below 1024 require root privileges. It is not recommended to run the monitor process as root. If it's necessary to expose the web service on the normal TCP port 80, it's recommended that you run nginx to front the service. If you're running the service behind a home NAT service, it's usually also possible to do port translation as part of the port forwarding. See your internet provider's documentation for help. Last, but not least, it's also possible to do port-forwarding via IPTables to expose the port 8000 process on port 80.
+
+Be aware that future versions of this software will offer the ability to send data via your radio. In most countries, it's illegal to allow non-monitored, non-licensed users to generate RF traffic under your callsign. While future versions will require explicit flags on the command line at runtime to enable transmission, it's wise to consider what access is allowed to the monitor.py process.
+
 ### Collector
-collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to an aggregator. By default, it assumes the aggregator is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the aggregator) may be pointed at a single aggregator. If the collector operator specifies their call sign, that data will be flagged within the aggregator for visible highlighting, etc.
+collector.py is the agent which talks to your JS8Call instance and extracts data. This data is then sent to the monitor process. By default, it assumes the monitor is running on the same host as the collector on TCP port 8001, but command-line flags allow you to specify a different host (possibly across the Internet) and/or a different port. Any number of collectors (up to bandwidth and CPU limits of the monitor) may be pointed at a single monitor. If the collector operator specifies their call sign and radio type, that data will be displayed on the end user's web page for each received message.
 
 The collector doesn't make a huge effort to properly handle exceptions at this point. If a thread dies, it simply restarts the thread. Future versions of the code will be smarter, but for now, this dumb behavior gets the job done.
-
-### Monitor
-monitor.py talks to an aggregator on TCP 8001 and periodically (by default, every three seconds) fetches all available data. That data is then made available as a web page on TCP 8000 that can be viewed on any web browser (including phones and tablets). As with the aggregator, this port may be exposed to the Internet, though care should be taken, as future features may allow any user of the web page to send their own data via HF (though there will be options to disable transmissions). Expose to the Internet at your own risk. It's really intended for internal (LAN) use, not public-facing. As with the aggregator, the port number may be changed, if desired. If you want to run it on port 80, you'll either have to run it as root (a very very very bad idea that you shouldn't even consider), or front-end it with something like nginx or port forwarding/translation in your router/firewall. There are hundreds of tutorials for both methods on the web; this is left as an exercise for the reader.
-
-If you wish to be able to initiate transmissions from the UI, you must specify the --transmit option when running the monitor, as well as specifying the --transmit option when running the collectors for any radios you want to be able to transmit from. If --transmit is not specified when running the monitor, no transmit options will be visible. If --transmit is specified, transmit options will only be visible for radios whose collectors were also run with the --transmit option.
-
-Note that allowing transmissions from the open Internet is an exceptionally bad idea. This option is only intended to be used when the web interface is available in a restricted network environment.
 
 ### Web Interface
 
 The first table includes the current list of collectors, one for each instance of JS8Call.
 
-The second table includes all traffic seen for the last thirty minutes (this timeout can be changed with command-line flags). If you click on a call sign in the first two columns, a new window/tab will open on pskreporter.info showing all traffic to/from that callsign. If you've installed the FCC callsign file (see below), there will be an extra "Calls" field showing info on the two call signs involved in each transmission. Clicking on one of these calls will take you to that ham's QRZ.com page (assuming you're logged into qrz).
+The second table includes all traffic seen for the last thirty minutes (this timeout can be changed with command-line flags). If you click on a call sign in the first two columns, a new window/tab will open on pskreporter.info showing all traffic to/from that callsign. If you've installed the FCC callsign file (see below), there will be an extra "Calls" field showing info on the two call signs involved in each transmission. Clicking on one of these calls will take you to that ham's QRZ.com page (assuming you're logged into qrz). In addition, there is a flag icon next to each from/to callsign that will take you to the pskreporter.info map page to visualize reported traffic to/from that callsign.
 
 To have call owner information available, you'll need to download the FCC database and copy the EN.dat file into the directory you run the monitor.py process from. This file is updated daily (though there's no need for you to fetch this file daily) and can be downloaded from:
-ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip
+ftp://wirelessftp.fcc.gov/pub/uls/complete/l_amat.zip. Only the EN.dat file is used by the js8net process.
 
 At some point, I anticipate the option of querying one of the many callsign webpages with public APIs (such as qrz.com) for non-USA call info. For now, the web interface is somewhat USA-centric.
 
@@ -334,17 +331,19 @@ At some point, I anticipate the option of querying one of the many callsign webp
 
 #### Bugs to be Fixed
 
-* Javascript does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
-* Table headers aren't quite right, do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section).
+* The Javascript code does not properly handle exceptions (because I haven't written the code yet to deal with exceptions), and does odd GUI things when there are certain JSON/network failures.
+* Table headers aren't quite right, and do not properly reflect CSS intent (I think I'm missing the <tr> in the <thead> section, but haven't figured out how to add it yet).
 * I taught myself Javascript specifically for this web project using a couple of 10+ year-old books I bought at a used book store on a recent road trip. In other words, it's my first ever Javascript project. So if you notice that my Javascript sucks even more than typical Javascript, that's why.
+* I'd like to re-write the client-side code in React. Once I learn React.
 
 #### Features to be Added
 
 * Add an adjustable parameter for the "close" highlighting (currently fixed at 150mi)
-* Add metric option (for countries who've never sent people to walk around on the moon).
+* Add metric option (for countries who've never sent people to walk on the moon).
 * Neither the core library nor the GUI properly handle relays.
+* Callsigns with postfixes are handled correctly (ie, "N0CLU/MM"). Callsigns with prefixes are not (ie, "VK0/N0CLU"). This problem is harder to solve than it looks.
 * Document the arrl.cty feature.
-* Have to re-load the web page to get the new colors. This isn't a bug, but it's something I may or may not change (adds traffic to each transaction).
+* You have to re-load the web page to get any new colors specified in color.dat. This isn't a bug, but it's something I may or may not change (making it automatic adds traffic to every transaction every three seconds).
 * Not all of the country flags are 100% correct. I think I have all the actual countries right, but a lot of the territories and islands are still 'xx' (ie, undefined) until I get 2-3 hours some boring evening to look them all up.
 * Should probably rebuild all of this in react.js at some point. But for now, it works.
 

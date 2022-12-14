@@ -18,4 +18,5 @@ start_*.sh
 rx.sh
 tx.sh
 arrl.cty
-
+homer.sh
+local.sh

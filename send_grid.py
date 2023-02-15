@@ -96,6 +96,8 @@ if __name__ == "__main__":
     parser.add_argument("--set_grid",default=False,action="store_true",help="Set the JS8Call grid square")
     parser.add_argument("--get_grid",default=False,action="store_true",help="Use the pre-configured JS8Call grid square")
     parser.add_argument("--grid_digits",default=10,help="How many grid square digits to store in JS8Call (default 10)")
+    parser.add_argument("--track",default=False,help="Track")
+    parser.add_argument("--interval",default=600,help="Seconds between track location transmissions (default 600)")
     parser.add_argument("--lat",default=False,help="Specify latitude")
     parser.add_argument("--lon",default=False,help="Specify longitude")
     parser.add_argument("--grid",default=False,help="Specify grid square")
@@ -146,6 +148,9 @@ if __name__ == "__main__":
     else:
         gpsdport=2947
 
+    if(args.gpsd_host or (args.env and (os.environ.get("GPSDHOST") or os.environ.get("GPSDPORT")))):
+        import gpsd
+
     if(args.verbose):
         print("Connecting to JS8Call...")
     start_net(js8host,js8port)
@@ -177,25 +182,35 @@ if __name__ == "__main__":
     if(args.grid):
         grid=args.grid
     if(args.gpsd_host or (args.env and (os.environ.get("GPSDHOST") or os.environ.get("GPSDPORT")))):
-        import gpsd
         if(args.verbose):
             print("Connecting to GPSD...")
         gpsd.connect(host=gpsdhost,port=gpsdport)
         if(args.verbose):
             print("Connected.")
-            print("Getting lat/lon...")
-        packet=gpsd.get_current()
         if(args.verbose):
             print("Complete.")
+        packet=gpsd.get_current()
         grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
     if(grid):
         if(args.set_grid):
             set_grid(grid)
         if(not(args.fake_send)):
-            send_aprs_grid(grid)
-        if(args.verbose):
-            print("Sent grid: ",grid)
-            print("lat/lon: ",mh2ll(grid))
+            if(args.track):
+                while(True):
+                    packet=gpsd.get_current()
+                    grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
+                    send_aprs_grid(grid)
+                    if(args.verbose):
+                        print("Sent grid: ",grid)
+                        print("lat/lon: ",mh2ll(grid))
+                    sleep(int(args.interval))
+            else:
+#                packet=gpsd.get_current()
+#                grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))
+                send_aprs_grid(grid)
+                if(args.verbose):
+                    print("Sent grid: ",grid)
+                    print("lat/lon: ",mh2ll(grid))
         if(not(args.fake_send)):
             time.sleep(3)
     else:

@@ -4,7 +4,7 @@
 
 ## The Library
 
-js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion. Likewise, it's intended to run on "unix-like" operating systems (OSX, Linux, and the various BSD flavors). It *might* work on Windows. It might not. The code has not been written to excluded Windows, but I have no simple way to test it. The generated web pages (see the bottom of this document) should be viewable on any modern Chromium-based browser and Firefox. I have not tested them on IE or Safari.
+js8net is a python3 package for interacting with the JS8Call API. It works exclusively in TCP mode. It *might* work with python2, but I suspect not. I haven't tried it. If it doesn't work, but you'd like it to, I'll happily consider your patches for inclusion. Likewise, it's intended to run on "unix-like" operating systems (OSX, Linux, and the various BSD flavors). It *might* work on Windows. It might not. The code has not been written to excluded Windows, but I have no simple way to test it. The generated web pages (see the bottom of this document) should be viewable on any modern Chromium-based browser and Firefox. I have not tested them on IE or Safari.
 
 The JS8Call API is a bit painful to use directly from your own code for several reasons:
 
@@ -20,25 +20,15 @@ The JS8Call API is a bit painful to use directly from your own code for several 
 
 - There are many errors and notices, such as serial comms errors between the software and your laptop, that can only be cleared or retried by clicking the mouse on the screen. They cannot be handled via the API.
 
-This library is an attempt to hide as much of the API's complexity as possible behind a more traditional query/reply paradigm. It also tries to make up for some of the API's shortcomings as best it can.
+This library is an attempt to hide as much of the API's complexity as possible behind a more traditional query/reply paradigm. It also tries to make up for some of the API's shortcomings as best it can. The good news is that there is at least a small amount of work being done to update the JS8Call code after all these years.
 
 As you use this API, keep in mind the architecture of JS8Call itself that doesn't allow API changes to be visible in the GUI. It will confuse you until you get used to it. If you change the grid square using the API, the GUI will still show the old grid square. If you change your transmission speed using the API, the GUI will still show the old transmission speed. Everything will work just fine, but it will look wrong on screen. There are bugs open against JS8Call to fix this.
 
 While JS8Call by and large does work well, it's been two years since the last release, and there are numerous anticipated bug fixes supposedly in the works that should make JS8Call a much better piece of software to work with via the API.
 
-## Transmit Timeout Work-Around
+## Idle Timeout
 
-If you're not interested in recompiling JS8Call from scratch, there's a work-around (at least for Linux users): xdotool. xdotool is a handy tool for faking various mouse and keyboard events under X11. I wrote a simple little shell script that keeps JS8Call from going to sleep by moving the mouse to the text entry box in the GUI once per hour, then "clicking" the left mouse button. Once per hour is very much overkill, as once ever 24 hours would be enough. Whatever, it works on both x86 Linux and on the Pi. Windows and Mac users, I don't know the answer for you. You'll have to determine the appropriate X and Y coordinates on your screen for the little box to click in, and that will depend on the resolution of your screen, the size of the JS8Call window (I maximize mine), and the position of the JS8Call windows relative to the top left corner (which isn't relevant if it's maximized, it's always 0,0). On my laptop, the right spot is 1300,1100. So I just put the following script in a file and run it in an xterm:
-````bash
-#!/bin/bash
-
-while [ 1 ]
-do
-	xdotool search --name "JS8Call" windowactivate %@ \
-		mousemove 1300 1100 click 1
-	sleep 3600
-done
-````
+Make sure you set the Idle Timeout to "Disabled", or the API will quit working after some (configurable) time after you don't touch the keyboard or mouse. Obviously, this breaks things.
 
 ## Getting Started
 
@@ -278,7 +268,43 @@ See above for documentation on what these calls do.
 
 There are several scripts bundled with the library that show how to do various things, and are useful in their own right. Each of them requires command-line flags or environment variables that point to the JS8Call server. One can use --js8_host and --js8_port, OR you can the environment variables JS8HOST and JS8PORT and combine that with the flag --env (to tell the script to use the env variables). The script that sends your APRS grid square can also optionally get your location from a GPSD server. This can be specified with either --gpsd_host and --gpsd_port, or by setting the GPSDHOST and GPSDPORT environment variables, combined with the --env flag.
 
+A useful bundled utility is groups.py. This script will process your DIRECTED.TXT file produced by JS8Call and write a file called groups.json which contains a list of all groups (ie, @JS8CHESS) seen in your DIRECTED.TXT file, as well as all callsigns of people who either sent traffic to that list, or responded to a query to that list. This file can be processed by your own scripts to do all sorts of interesting things, or you can pull data out of it manually for casual queries (heck, you can just load the JSON file into a text editor, for that matter and search visually). For example, if you just want to see the members (at least the members whose traffic your station was able to receive) of @JS8CHESS, you could, do the following:
+
+```
+nobody@mother:~/js8net$ ./groups.py ~/.local/share/JS8Call/DIRECTED.TXT
+...
+nobody@mother:~/js8net$ jq -r ."JS8CHESS" groups.json 
+[
+  "WA8WQU",
+  "N2VJO",
+  "VE3TRQ",
+  "NC8R",
+  "VE3SCN",
+  "KB1CTC",
+  "KW9Q",
+  "K4KPI",
+  "K1OEV",
+  "KR4IW",
+  "AA0DY",
+  "WB4SOM",
+  "K5MGK",
+  "WE4SEL",
+  "KE8NQQ",
+  "N0YH",
+  "N4JSW",
+  "N0JVW",
+  "KD2UWR",
+  "K4RVA",
+  "K1TWH"
+]
+nobody@mother:~/js8net$ 
+```
+
+Note that this is not EVERYBODY who is a member of a given group. It's a list of people who participated in that group during the time period your station was listening on that frequency, and whose data was logged in your DIRECTED.TXT file. The longer you listen, the more data you have to analyze. If you're brand new to JS8Call and your log file only goes back one day, your results will be very different from a user who has log data going back several years. Also note that it's entirely possible that the @BEER group on 20M is entirely different in purpose and membership than the @BEER group on 40M. If you've got both bands in your DIRECTED.TXT file, they'll be combined into one single @BEER group in the JSON file. While it's possible to modify groups.py to make this distinction and keep them separated, it doesn't currently do so.
+
 ## Distributed Data Collection and Web Interface
+
+NOTE: I've started over on this part of the code. You'll note that if you run it, it's regressed to much simpler functionality. You'll also note that the code is considerably less horrible. I'm doing an almost from-scratch re-write. The old functionality will come back over time as I get it re-written. Much of the text below is now wrong and/or out of date. I will fix the docs as I fix the code. Consider this functionality as "pre-alpha".
 
 It's important to note that this part of the software is still very much in the development stage, and may have critical vulnerabilities that make exposing the exposed services to the open Internet a Very Bad Idea. While it certainly will work, it's intended for protected, internal LAN use at this time. Also note that at this time, the web server MUST be run from the same directory as all of it's files (JSON files, images, etc). It's not yet smart enough to go look in the "right place" for these resources.
 

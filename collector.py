@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-global version
-version='0.1'
-
 import os
 import sys
 import time
@@ -43,6 +40,7 @@ def update_thread(name):
     global mygrid
     global myfreq
     global myspeed
+    global myuuid
     print(name+' started...')
     last=time.time()
     while(True):
@@ -53,12 +51,12 @@ def update_thread(name):
             myspeed=get_speed()
         if(time.time()>=last+30):
             last=time.time()
-            act=get_call_activity() # todo: finish/test
+            act=get_call_activity()
             if(act):
                 stuff=[]
                 for a in act:
                     stuff.append({'call':a.call,'snr':a.snr,'utc':a.utc,'grid':a.grid})
-                res=requests.post('http://'+aggregator+'/grids',json={'grids':stuff})
+                res=requests.post('http://'+aggregator+'/collect',json={'type':'grids','uuid':myuuid,'stuff':stuff})
                 print(res)
                 res.close()
         time.sleep(5.0)
@@ -66,7 +64,6 @@ def update_thread(name):
 def traffic_thread(name):
     global aggregator
     global myuuid
-    global version
     print(name+' started...')
     while(True):
         time.sleep(0.1)
@@ -74,15 +71,17 @@ def traffic_thread(name):
             with rx_lock:
                 rx=rx_queue.get()
             print('New traffic received...')
-            if(rx['type']=='RX.DIRECTED' or rx['type']=='RX.ACTIVITY'):
+            if(rx['type']=='RX.DIRECTED'):
                 print('Sending traffic to aggregator...')
-                rx['uuid']=myuuid
-                rx['version']=version
                 print(rx)
-                res=requests.post('http://'+aggregator+'/traffic',json={'traffic':rx})
+                rx['uuid']=myuuid
+                res=requests.post('http://'+aggregator+'/collect',json={'type':'traffic','stuff':rx})
                 print(res)
                 res.close()
-                        
+            else:
+                print('Not sending traffic to aggregator...')
+                print(rx)
+
 def station_thread(name):
     global aggregator
     global myuuid
@@ -93,7 +92,6 @@ def station_thread(name):
     global myspeed
     global myfreq
     global radio
-    global version
     global tx_allowed
     print(name+' started...')
     time.sleep(7.5)
@@ -108,57 +106,14 @@ def station_thread(name):
                'speed': myspeed,
                'dial': myfreq['dial'],
                'carrier': myfreq['offset'],
-               'uuid': myuuid,
                'radio': radio,
-               'tx':tx_allowed,
-               'version': version}
-            print('-----------------------------------')
-            print(j)
-            res=requests.post('http://'+aggregator+'/station',json={'station':j})
+               'tx':tx_allowed}
+            res=requests.post('http://'+aggregator+'/collect',json={'type':'station','uuid':myuuid,'stuff':j})
             print('sending station')
             print(res)
-            j=res.json()
-            print(j)
-            print('-----------------------------------')
+#            j=res.json() # these are basically placeholders for sending commands back to the radios
+#            print(j)
             res.close()
-        if('cmd' in j):
-            print('Command: '+str(j))
-            if(j['cmd']):
-                if('uuid' in j):
-                    if(j['uuid']==myuuid):
-                        print('Received a valid command: '+j['cmd'])
-                        if(j['cmd']=='send-grid'):
-                            if('grid' in j):
-                                if(tx_allowed):
-                                    send_aprs_grid(j['grid'])
-                            else:
-                                if(tx_allowed):
-                                    send_aprs_grid(get_grid())
-                        elif(j['cmd']=='send-hb'):
-                            if(tx_allowed):
-                                send_heartbeat()
-                        elif(j['cmd']=='send-text'):
-                            if(tx_allowed):
-                                content=j['content']
-                                if(len(content)>67):
-                                    content=content[0:67]
-                                send_sms(re.sub('\D','',j['phone']),content)
-                        elif(j['cmd']=='send-aprs'):
-                            if(tx_allowed):
-                                content=j['content']
-                                if(len(content)>67):
-                                    content=content[0:67]
-                                send_aprs(j['aprs-call'],content)
-                        elif(j['cmd']=='send-email'):
-                            if(tx_allowed):
-                                content=j['content']
-                                if(len(content)>67):
-                                    content=content[0:67]
-                                send_email(j['addr'],content)
-                    else:
-                        print('Command received, but not for me...')
-        else:
-            print('No valid command received')
         time.sleep(15)
                         
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -222,20 +177,18 @@ if(__name__ == '__main__'):
     thread2.start()
     
     while(True):
-        # TODO: Maybe do some screen update stuff here at some point,
-        # but for now, just let the threads roll...
         if(not(thread0.is_alive())):
-            print('(re-)starting thread0...')
+            print('(re-)starting Update Thread...')
             thread0.join()
             thread0=Thread(target=update_thread,args=('Update Thread',),daemon=True)
             thread0.start()
         if(not(thread1.is_alive())):
-            print('(re-)starting thread1...')
+            print('(re-)starting Traffic Thread...')
             thread1.join()
             thread1=Thread(target=traffic_thread,args=('Traffic Thread',),daemon=True)
             thread1.start()
         if(not(thread2.is_alive())):
-            print('(re-)starting thread2...')
+            print('(re-)starting Station Thread...')
             thread2.join()
             thread2=Thread(target=station_thread,args=('Station Thread',),daemon=True)
             thread2.start()

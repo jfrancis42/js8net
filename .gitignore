@@ -20,3 +20,6 @@ tx.sh
 arrl.cty
 homer.sh
 local.sh
+*.dbm
+keep
+traffic.jpg

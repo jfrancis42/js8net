@@ -1,4 +1,4 @@
-verbose=false;
+var verbose=false;
 
 // This function takes in latitude and longitude of two location and
 // returns the distance between them as the crow flies (in
@@ -20,7 +20,7 @@ function calcCrow(lat1,lon1,lat2,lon2) {
 
 // Converts from degrees to radians.
 function toRadians(degrees) {
-  return degrees * Math.PI / 180;
+    return degrees * Math.PI / 180;
 };
 
 // Converts from radians to degrees.
@@ -86,9 +86,8 @@ var first_time=true;
 
 // Build the table contents page.
 var intervalId=setInterval(async function() {
-    //console.log('loop'); // xxx todo remove
-    // age
-    now=Math.floor(Date.now()/1000)
+    // time_t
+    var now=Math.floor(Date.now()/1000)
     
     if(first_time) {
 	// Find the 'stations' table.
@@ -114,12 +113,9 @@ var intervalId=setInterval(async function() {
 	table.appendChild(thead);
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Radio'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('From'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('PSKR'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Map'));
+	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('To'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('PSKR'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Map'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Dist'));
+	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Age'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('SNR'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Speed'));
@@ -193,7 +189,7 @@ var intervalId=setInterval(async function() {
     
     for(let i=0; i<l; i++) {
 	let rx=tfc[i];
-//	console.log(rx.stuff.uuid)
+	var age=Math.round(now-rx.stuff.time)*1000;
 	var row=document.getElementById(rx.id);
 	if(!row) {
 	    row=table.insertRow(0);
@@ -202,7 +198,6 @@ var intervalId=setInterval(async function() {
 	    }
 	    var new_row=true
 	}
-//	console.log(rx);
 	if(new_row) {
 	    // Radio
 	    var cell=row.insertCell(-1);
@@ -210,51 +205,85 @@ var intervalId=setInterval(async function() {
 	    
 	    // From
 	    var cell=row.insertCell(-1);
-	    if(rx.from_grid==false) {
-		cell.innerHTML=rx.from_call;
+	    if(rx.from_info) {
+		var info='<br />'+rx.from_info;
 	    } else {
-		cell.innerHTML=rx.from_call+'<br />'+rx.from_grid;
+		if(rx.from_country) {
+		    var info='<br />'+rx.from_country;
+		} else {
+		    var info='';
+		}
+	    }
+	    if(rx.from_grid==false) {
+		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+info;
+	    } else {
+		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+rx.from_grid+info;
 	    }
 	    
-	    // PSKR
+	    // PSKR/QRZ/Map
 	    var cell=row.insertCell(-1);
+	    if(rx.from_addr) {
+		var address=rx.from_addr;
+	    } else {
+		var address=rx.from_country;
+	    }
 	    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+
-		'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
-	    
-	    // Map
-	    var cell=row.insertCell(-1);
-	    cell.innerHTML='empty';
+		'&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;PSKR</a>'+
+		'<br />'+
+		'<a href="https://qrz.com/db/'+rx.from_call+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;QRZ</a>'+
+		'<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;Map</a>';
 	    
 	    // To
 	    var cell=row.insertCell(-1);
-	    if(rx.to_grid==false) {
-		cell.innerHTML=rx.to_call;
-	    } else {
-		cell.innerHTML=rx.to_call+'<br />'+rx.to_grid;
-	    }
 	    if(rx.to_call[0]=='@') {
 		cell.style.backgroundColor=colors.at;
+		var flag=false;
+	    } else {
+		var flag=true;
 	    }
-
-	    // PSKR
+	    if(rx.to_info) {
+		var info='<br />'+rx.to_info;
+	    } else {
+		if(rx.to_country) {
+		    var info='<br />'+rx.to_country;
+		} else {
+		    var info='';
+		}
+	    }
+	    if(rx.to_grid==false) {
+		if(flag) {
+		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+info;
+		} else {
+		    cell.innerHTML=rx.to_call+info;
+		}
+	    } else {
+		if(flag) {
+		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />'+rx.to_grid+info;
+		} else {
+		    cell.innerHTML=rx.to_call+'<br />'+rx.to_grid+info;
+		}
+	    }
+	    
+	    // PSKR/QRZ/Map
 	    var cell=row.insertCell(-1);
+	    if(rx.to_addr) {
+		var address=rx.to_addr;
+	    } else {
+		var address=rx.to_country;
+	    }
 	    if(rx.to_call[0]!='@') {
-		cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+'&timerange=1800&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="24" height="24" /></a>';
+		cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+
+		    '&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;PSKR</a>'+
+		    '<br />'+
+		    '<a href="https://qrz.com/db/'+rx.to_call+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;QRZ</a>'+
+		    '<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;Map</a>';
 	    } else {
 		cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 	    }
 	    
-	    // Map
-	    var cell=row.insertCell(-1);
-	    cell.innerHTML='empty';
-	    
-	    // Dist
-	    var cell=row.insertCell(-1);
-	    cell.innerHTML='empty';
-	    
 	    // Age
 	    var cell=row.insertCell(-1);
-	    cell.innerHTML=new Date(Math.round(now-rx.stuff.time)*1000).toISOString().substr(11,8);
+	    cell.innerHTML=new Date(age).toISOString().substr(11,8);
 	    
 	    // SNR
 	    var cell=row.insertCell(-1);
@@ -285,13 +314,12 @@ var intervalId=setInterval(async function() {
 	    } else if(rx.speed==4) {
 		spd_img='/svg/kaefer.svg';
 	    }
-	    cell.innerHTML='<img src=\"'+spd_img+'\" width=\"24\" height=\"auto\"/>&nbsp;&nbsp;'+
+	    cell.innerHTML='<img src=\"'+spd_img+'\" width=\"36\" height=\"auto\"/><br />'+
 		english_speed(rx.speed);
-//	    cell.innerHTML=english_speed(rx.speed);
 	    
 	    // Freq
 	    var cell=row.insertCell(-1);
-	    cell.innerHTML=(rx.freq/1000.0).toFixed(3)+'khz';
+	    cell.innerHTML=(rx.freq/1000.0).toFixed(3)+' khz';
 	    
 	    // Text
 	    var cell=row.insertCell(-1);
@@ -363,12 +391,16 @@ var intervalId=setInterval(async function() {
 	    } else {
 		cell.innerHTML=rx.text;
 	    }
-
-//	    cell.innerHTML=rx.text;
 	} else {
 	    // Age
-	    var cell=row.cells[8];
+	    var cell=row.cells[5];
 	    cell.innerHTML=new Date(Math.round(now-rx.stuff.time)*1000).toISOString().substr(11,8);
+	}
+
+	// Delete the expired traffic rows.
+	var r=document.getElementById('traffic');
+	for(let i=l; i<r.rows.length; i++) {
+	    r.deleteRow(i);
 	}
     }
 

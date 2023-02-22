@@ -93,7 +93,7 @@ var intervalId=setInterval(async function() {
 	// Find the 'stations' table.
 	var table=document.getElementById('stations');
 	
-	// Create the table headers.
+	// Create the stations headers.
 	var thead=document.createElement('thead');
 	table.appendChild(thead);
 	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Call'));
@@ -116,28 +116,43 @@ var intervalId=setInterval(async function() {
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('To'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
+	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Src Distance'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Age'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('SNR'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Speed'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Frequency'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Received Text'));
-
-	// Get the color JSON.
-	if(verbose) { console.log('Fetching /colors'); }
-	var color_response=await fetch('/colors');
-	var color_stuff=await color_response.text();
-	
-	// Convert the text into JSON. todo: shouldn't have to do this.
-	colors=JSON.parse(color_stuff);
     }
 
-    if(first_time || now%5==0) {
+    if(first_time || now%15==0) {
+	// Get colors if we need them.
+	if(!colors) {
+	    // Get the color JSON.
+	    if(verbose) { console.log('Fetching /colors'); }
+	    var color_response=await fetch('/colors');
+	    var color_stuff=await color_response.text();
+	    
+	    // Convert the text into JSON.
+	    var colors=JSON.parse(color_stuff);
+	}
+	
+	// Get friends if we need them.
+	if(!friends) {
+	    // Get the friends JSON.
+	    if(verbose) { console.log('Fetching /friends'); }
+	    var friend_response=await fetch('/friends');
+	    var friend_stuff=await friend_response.text();
+	    
+	    // Convert the text into JSON.
+	    var friends=JSON.parse(friend_stuff);
+	}
+    
 	// Get the stuff JSON.
 	if(verbose) { console.log('Fetching /json'); }
 	var stuff_response=await fetch('/json');
 	var stuff_stuff=await stuff_response.text();
 	
-	// Convert the text into JSON. todo: shouldn't have to do this.
+	// Convert the text into JSON.
 	stuff=JSON.parse(stuff_stuff);
 	
 	console.log(stuff)
@@ -205,6 +220,12 @@ var intervalId=setInterval(async function() {
 	    
 	    // From
 	    var cell=row.insertCell(-1);
+	    var f=false;
+	    if(friends) {
+		if(Object.keys(friends).includes(rx.from_call)) {
+		    f=friends[rx.from_call];
+		}
+	    }
 	    if(rx.from_info) {
 		var info='<br />'+rx.from_info;
 	    } else {
@@ -218,6 +239,11 @@ var intervalId=setInterval(async function() {
 		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+info;
 	    } else {
 		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+rx.from_grid+info;
+	    }
+	    if(f) {
+		if(f[1]!='') {
+		    cell.style.backgroundColor=f[1];
+		}
 	    }
 	    
 	    // PSKR/QRZ/Map
@@ -235,6 +261,12 @@ var intervalId=setInterval(async function() {
 	    
 	    // To
 	    var cell=row.insertCell(-1);
+	    var f=false;
+	    if(friends) {
+		if(Object.keys(friends).includes(rx.to_call)) {
+		    f=friends[rx.to_call];
+		}
+	    }
 	    if(rx.to_call[0]=='@') {
 		cell.style.backgroundColor=colors.at;
 		var flag=false;
@@ -263,6 +295,11 @@ var intervalId=setInterval(async function() {
 		    cell.innerHTML=rx.to_call+'<br />'+rx.to_grid+info;
 		}
 	    }
+	    if(f) {
+		if(f[1]!='') {
+		    cell.style.backgroundColor=f[1];
+		}
+	    }
 	    
 	    // PSKR/QRZ/Map
 	    var cell=row.insertCell(-1);
@@ -281,6 +318,25 @@ var intervalId=setInterval(async function() {
 		cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 	    }
 	    
+	    // Distance
+	    var cell=row.insertCell(-1);
+	    if(stuff.stations[rx.stuff.uuid].stuff.lat && stuff.stations[rx.stuff.uuid].stuff.lon && rx.from_lat && rx.from_lon) {
+		var dist=Math.round(calcCrow(stuff.stations[rx.stuff.uuid].stuff.lat,stuff.stations[rx.stuff.uuid].stuff.lon,
+					     rx.from_lat,rx.from_lon));
+		var brg=Math.round(bearing(stuff.stations[rx.stuff.uuid].stuff.lat,stuff.stations[rx.stuff.uuid].stuff.lon,
+					   rx.from_lat,rx.from_lon));
+		if(dist<=75) {
+		    cell.innerHTML='same grid';
+		    cell.style.backgroundColor=colors.close;
+		} else {
+		    cell.innerHTML=dist+' mi @<br /> '+brg+' deg';
+		}
+	    } else {
+		// todo: this isn't working - debug
+		cell.innerHTML='';
+		cell.style.backgroundColor=colors.grey;
+	    }
+
 	    // Age
 	    var cell=row.insertCell(-1);
 	    cell.innerHTML=new Date(age).toISOString().substr(11,8);
@@ -393,7 +449,7 @@ var intervalId=setInterval(async function() {
 	    }
 	} else {
 	    // Age
-	    var cell=row.cells[5];
+	    var cell=row.cells[6];
 	    cell.innerHTML=new Date(Math.round(now-rx.stuff.time)*1000).toISOString().substr(11,8);
 	}
 

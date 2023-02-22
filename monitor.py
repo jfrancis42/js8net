@@ -18,7 +18,6 @@ from os import mkdir
 import threading
 from threading import Thread
 from yattag import Doc
-import maidenhead as mh
 from queue import Queue
 from urllib.parse import urlparse,parse_qs
 from http.server import HTTPServer,BaseHTTPRequestHandler
@@ -536,8 +535,6 @@ def housekeeping_thread(name):
     print(name+' started...')
     while(True):
         time.sleep(60.0)
-        print('-----------------------------------------')
-        print('Keeping house...')
         now=time.time()
         with grids_lock:
             with stations_lock:
@@ -554,8 +551,6 @@ def housekeeping_thread(name):
                             ts=float(key)
                             if(ts<now-max_age):
                                 del(traffic[key])
-        print('Done.')
-        print('-----------------------------------------')
 
 def main_page ():
     global css
@@ -617,6 +612,20 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     for row in colors_reader:
                         colors[row[0]]=row[1]
             self.wfile.write(str.encode(json.dumps(colors)))
+        if(self.path=='/friends'):
+            self.send_response(200)
+            self.send_header('Content-type','application/json')
+            self.end_headers()
+            if(exists('friends.dat')):
+                friends={}
+                print('Loading friend records...')
+                with open(basedir+'friends.dat','r',encoding='utf8') as friend_file:
+                    friend_reader=csv.reader(friend_file,delimiter=',')
+                    for row in friend_reader:
+                        friends[row[0].upper()]=[row[1],row[2]]
+            else:
+                print('No friends found...')
+            self.wfile.write(str.encode(json.dumps(friends)))
         if(self.path.find('/svg/')==0):
             tmp=self.path.split('/')
             if(len(tmp)!=3):
@@ -716,8 +725,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             j=json.loads(payload)
             self.send_response(200)
             self.end_headers()
-            print('payload: '+payload)
-            print('type: '+j['type'])
+#            print('payload: '+payload)
+#            print('type: '+j['type'])
             now=time.time()
             if(j['type']=='grids'):
                 with grids_lock:
@@ -730,6 +739,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if(j['type']=='station'):
                 with stations_lock:
                     stations[j['uuid']]=json.dumps(j)
+                    print(json.dumps(j))
             if(j['type']=='traffic'):
                 with traffic_lock:
                     # Set the from call, if available.
@@ -811,33 +821,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     j['freq']=j['stuff']['params']['FREQ']
                     # Text
                     j['text']=j['stuff']['params']['TEXT']
-                    # todo: fix all this later
-                    j['from_lat']=False
-                    j['from_lon']=False
-                    j['to_lat']=False
-                    j['to_lon']=False
-                    # From lat/lon
-#                    if(fmgrid):
-#                        if(len(fmgrid)>8):
-#                            (lat,lon)=mh.to_location(fmgrid[0:8])
-#                        else:
-#                            (lat,lon)=mh.to_location(fmgrid)
-#                        j['from_lat']=lat
-#                        j['from_lon']=lon
-#                    else:
-#                        j['from_lat']=False
-#                        j['from_lon']=False
-#                    # To lat/lon
-#                    if(togrid):
-#                        if(len(togrid)>8):
-#                            (lat,lon)=mh.to_location(togrid[0:8])
-#                        else:
-#                            (lat,lon)=mh.to_location(togrid)
-#                        j['to_lat']=lat
-#                        j['to_lon']=lon
-#                    else:
-#                        j['to_lat']=False
-#                        j['to_lon']=False
                     key=str(j['stuff']['time'])
                     # Todo: later, del(j['stuff']) once we've stolen everything we need (to save size)
                     # Set the ID

@@ -6,6 +6,7 @@ import sys
 import time
 import json
 import argparse
+import maidenhead as mh
 from js8net import *
 #import pdb
 import requests
@@ -97,10 +98,20 @@ def station_thread(name):
     time.sleep(7.5)
     while(True):
         with station_lock:
+            if(mygrid and mygrid!=''):
+                if(len(mygrid)>8):
+                    (lat,lon)=mh.to_location(mygrid[0:8])
+                else:
+                    (lat,lon)=mh.to_location(mygrid)
+            else:
+                lat=False
+                lon=False
             j={'time': time.time(),
                'en_time': time.asctime(),
                'call': mycall,
                'grid': mygrid,
+               'lat': lat,
+               'lon': lon,
                'host': js8host,
                'port': js8port,
                'speed': myspeed,

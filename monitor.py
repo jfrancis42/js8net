@@ -12,6 +12,7 @@ import argparse
 import requests
 import uuid
 import csv
+import maidenhead as mh
 from os.path import exists
 from os.path import expanduser
 from os import mkdir
@@ -596,6 +597,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global grids
         global grids_lock
         global colors
+        global mycall
         doc,tag,text=Doc().tagtext()
         if(self.path=='/'):
             self.send_response(200)
@@ -693,7 +695,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         self.send_header('Content-type','application/json')
                         self.end_headers()
                         out={}
-                        out['grids']={}
+                        out['mycall']=mycall
+#                        out['grids']={}
 #                        for call in grids.keys():
 #                            g=json.loads(grids[call])
 #                            out['grids'][call.decode('utf-8').split('/')[0]]=g
@@ -793,16 +796,40 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     if(fmcall.encode('utf-8') in grids.keys()):
                         fmgrid=json.loads(grids[fmcall])['grid']
                         j['from_grid']=fmgrid
+                        if(fmgrid):
+                            if(len(fmgrid)>8):
+                                (lat,lon)=mh.to_location(fmgrid[0:8])
+                            else:
+                                (lat,lon)=mh.to_location(fmgrid)
+                            j['from_lat']=lat
+                            j['from_lon']=lon
+                        else:
+                            j['from_lat']=False
+                            j['from_lon']=False
                     else:
                         fmgrid=False
                         j['from_grid']=False
+                        j['from_lat']=False
+                        j['from_lon']=False
                     # Set the to grid, if known.
                     if(tocall.encode('utf-8') in grids.keys()):
                         togrid=json.loads(grids[tocall])['grid']
                         j['to_grid']=togrid
+                        if(togrid):
+                            if(len(togrid)>8):
+                                (lat,lon)=mh.to_location(togrid[0:8])
+                            else:
+                                (lat,lon)=mh.to_location(togrid)
+                            j['to_lat']=lat
+                            j['to_lon']=lon
+                        else:
+                            j['to_lat']=False
+                            j['to_lon']=False
                     else:
                         togrid=False
                         j['to_grid']=False
+                        j['to_lat']=False
+                        j['to_lon']=False
                     j['from_info']=fminfo
                     j['to_info']=toinfo
                     j['from_addr']=fmaddr
@@ -836,6 +863,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 # Main program.
 if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description='Aggregate collected JS8call data from collectors.')
+    parser.add_argument('--call',default=False,help='My call')
     parser.add_argument('--listen',default=False,help='Listen port for collector traffic (default 8000)')
     parser.add_argument('--basedir',default=False,help='Monitor program directory (default is ~/.js8net/)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
@@ -843,6 +871,13 @@ if(__name__ == '__main__'):
                         action='store_true')
 
     args=parser.parse_args()
+
+    if(args.call):
+        mycall=args.call.upper()
+    else:
+        mycall=False
+    if(mycall):
+        print('My call sign: '+mycall)
 
     if(args.listen):
         listen=int(args.listen)

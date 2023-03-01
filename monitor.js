@@ -116,12 +116,18 @@ var intervalId=setInterval(async function() {
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('To'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Info'));
-	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Src Distance'));
+	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('From Distance'));
+	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('QSO Distance'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Age'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('SNR'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Speed'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Frequency'));
 	thead.appendChild(document.createElement("th")).appendChild(document.createTextNode('Received Text'));
+
+	var mycall=false;
+	var mygrid=false;
+	var mylat=false;
+	var mylon=false;
     }
 
     if(first_time || now%15==0) {
@@ -157,6 +163,18 @@ var intervalId=setInterval(async function() {
 	
 	console.log(stuff)
 	
+	// Find my own lat/lon. ToDo: This could be much better. In
+	// fact, this should work the same way as the 'from distance'
+	// calculation. Fix.
+	mycall=stuff.mycall;
+	for (const [key, value] of Object.entries(stuff.stations)) {
+	    if(value.stuff.call==mycall) {
+		mygrid=value.stuff.grid;
+		mylat=value.stuff.lat;
+		mylon=value.stuff.lon;
+	    }
+	}
+
 	// Find the 'stations' table.
 	var table=document.getElementById('stations');
 	
@@ -235,7 +253,9 @@ var intervalId=setInterval(async function() {
 		    var info='';
 		}
 	    }
-	    if(rx.from_grid==false) {
+	    if(rx.from_call==mycall && mygrid) {
+		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+mygrid+info;
+	    } else if(rx.from_grid==false) {
 		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+info;
 	    } else {
 		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+rx.from_grid+info;
@@ -282,7 +302,9 @@ var intervalId=setInterval(async function() {
 		    var info='';
 		}
 	    }
-	    if(rx.to_grid==false) {
+	    if(rx.to_call==mycall && mygrid) {
+		cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />'+mygrid+info;
+	    } else if(rx.to_grid==false) {
 		if(flag) {
 		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+info;
 		} else {
@@ -318,9 +340,11 @@ var intervalId=setInterval(async function() {
 		cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 	    }
 	    
-	    // Distance
+	    // Src Distance
 	    var cell=row.insertCell(-1);
-	    if(stuff.stations[rx.stuff.uuid].stuff.lat && stuff.stations[rx.stuff.uuid].stuff.lon && rx.from_lat && rx.from_lon) {
+	    if(rx.from_call==mycall) {
+		cell.innerHTML='Me';
+	    } else if(stuff.stations[rx.stuff.uuid].stuff.lat && stuff.stations[rx.stuff.uuid].stuff.lon && rx.from_lat && rx.from_lon) {
 		var dist=Math.round(calcCrow(stuff.stations[rx.stuff.uuid].stuff.lat,stuff.stations[rx.stuff.uuid].stuff.lon,
 					     rx.from_lat,rx.from_lon));
 		var brg=Math.round(bearing(stuff.stations[rx.stuff.uuid].stuff.lat,stuff.stations[rx.stuff.uuid].stuff.lon,
@@ -332,7 +356,29 @@ var intervalId=setInterval(async function() {
 		    cell.innerHTML=dist+' mi @<br /> '+brg+' deg';
 		}
 	    } else {
-		// todo: this isn't working - debug
+		cell.innerHTML='';
+		cell.style.backgroundColor=colors.grey;
+	    }
+
+	    // QSO Distance
+	    var cell=row.insertCell(-1);
+	    if(rx.from_lat && rx.from_lon && rx.to_call==mycall && mylat && mylon) {
+		var dist=Math.round(calcCrow(rx.from_lat,rx.from_lon,mylat,mylon));
+		if(dist<=75) {
+		    cell.innerHTML='same grid';
+		    cell.style.backgroundColor=colors.close;
+		} else {
+		    cell.innerHTML=dist+' mi';
+		}
+	    } else if(rx.from_lat && rx.from_lon && rx.to_lat && rx.to_lon) {
+		var dist=Math.round(calcCrow(rx.from_lat,rx.from_lon,rx.to_lat,rx.to_lon));
+		if(dist<=75) {
+		    cell.innerHTML='same grid';
+		    cell.style.backgroundColor=colors.close;
+		} else {
+		    cell.innerHTML=dist+' mi';
+		}
+	    } else {
 		cell.innerHTML='';
 		cell.style.backgroundColor=colors.grey;
 	    }
@@ -449,7 +495,7 @@ var intervalId=setInterval(async function() {
 	    }
 	} else {
 	    // Age
-	    var cell=row.cells[6];
+	    var cell=row.cells[7];
 	    cell.innerHTML=new Date(Math.round(now-rx.stuff.time)*1000).toISOString().substr(11,8);
 	}
 

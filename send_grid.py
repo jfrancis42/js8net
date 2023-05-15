@@ -203,7 +203,7 @@ if __name__ == "__main__":
                     if(args.verbose):
                         print("Sent grid: ",grid)
                         print("lat/lon: ",mh2ll(grid))
-                    sleep(int(args.interval))
+                    time.sleep(int(args.interval))
             else:
 #                packet=gpsd.get_current()
 #                grid=ll2mh(packet.lat,packet.lon,int(args.grid_digits))

@@ -1,4 +1,6 @@
-var verbose=false;
+var verbose=1;
+
+// todo: list of flags heard
 
 // This function takes in latitude and longitude of two location and
 // returns the distance between them as the crow flies (in
@@ -82,12 +84,90 @@ function removeRow(id) {
     }
 }
 
+var call_groups=new Map(); // index is call, value is array of groups
+var groups_call=new Map(); // index is groups, value is array of calls
+var recent_at=new Map(); // Who has sent to @ lately? call=[@foo,time_t]
+var display_groups=new Array();
+
+// Add the specified call to the specified group if it's not already a member.
+function add_call_to_group(call,group) {
+    if(groups_call.get(group)) {
+	if(!groups_call.get(group).includes(call)) {
+	    groups_call.get(group).push(call);
+	}
+    } else {
+	groups_call.set(group,[call]);
+    }
+}
+
+// Add the specified call to the specified group if it's not already a member.
+function add_group_to_call(call,group) {
+    if(call_groups.get(call)) {
+	if(!call_groups.get(call).includes(group)) {
+	    call_groups.get(call).push(group);
+	}
+    } else {
+	call_groups.set(call,[group]);
+    }
+}
+
+// Update both calls and groups.
+function update_calls_groups(call,group) {
+    add_call_to_group(call,group);
+    add_group_to_call(call,group);
+    if(!display_groups.includes(group) && group!='@ALLCALL' && group!='@HB') {
+	display_groups.push(group);
+    }
+}
+
+// Does the group include this call?
+function is_call_in_group(call,group) {
+    if(groups_call.get(group).includes(call)) {
+	return(true);
+    } else {
+	return(false);
+    }
+}
+
+// Build a QRZ link for a call.
+function qrz(call,linktext,icon) {
+    if(icon) {
+	return('<a href="https://qrz.com/db/'+call+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;'+linktext+'</a>');
+    } else {
+	return('<a href="https://qrz.com/db/'+call+'" target="_blank">&nbsp;'+linktext+'</a>');
+    }
+}
+
+// Build a Google Maps link for a location.
+function gmaps(loc,linktext,icon) {
+    if(icon) {
+	return('<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;'+linktext+'</a>');
+    } else {
+	return('<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc)+'" target="_blank">&nbsp;'+linktext+'</a>');
+    }
+}
+
+// Build a pskreporter map link for a call.
+function pskreporter(call,linktext,icon) {
+    if(icon) {
+	return('<a href="https://pskreporter.info/pskmap.html?preset&callsign='+call+'&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;'+linktext+'</a>');
+    } else {
+	return('<a href="https://pskreporter.info/pskmap.html?preset&callsign='+call+'&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank">&nbsp;'+linktext+'</a>');
+    }
+}
+
+
+// Return unix time_t as an int.
+function timet() {
+    return(Math.floor(Date.now()/1000));
+}
+
 var first_time=true;
 
 // Build the table contents page.
 var intervalId=setInterval(async function() {
     // time_t
-    var now=Math.floor(Date.now()/1000)
+    var now=timet();
     
     if(first_time) {
 	// Find the 'stations' table.
@@ -104,6 +184,16 @@ var intervalId=setInterval(async function() {
 	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Dial'));
 	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Carrier'));
 	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Radio'));
+
+	// Find the 'groups' table.
+	var table=document.getElementById('groups');
+	
+	// Create the groups headers.
+	var thead=document.createElement('thead');
+	table.appendChild(thead);
+	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Group Name'));
+	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Count'));
+	thead.appendChild(document.createElement('th')).appendChild(document.createTextNode('Members'));
 
 	// Find the 'traffic' table.
 	var table=document.getElementById('traffic');
@@ -133,35 +223,50 @@ var intervalId=setInterval(async function() {
     if(first_time || now%15==0) {
 	// Get colors if we need them.
 	if(!colors) {
-	    // Get the color JSON.
-	    if(verbose) { console.log('Fetching /colors'); }
-	    var color_response=await fetch('/colors');
-	    var color_stuff=await color_response.text();
-	    
-	    // Convert the text into JSON.
-	    var colors=JSON.parse(color_stuff);
+	    try {
+		// Get the color JSON.
+		if(verbose>=1) { console.log('Fetching /colors'); }
+		var color_response=await fetch('/colors');
+		var color_stuff=await color_response.text();
+		
+		// Convert the text into JSON.
+		var colors=JSON.parse(color_stuff);
+	    }
+	    catch(err) {
+		console.log('Color error: '+err);
+	    }
 	}
 	
 	// Get friends if we need them.
 	if(!friends) {
-	    // Get the friends JSON.
-	    if(verbose) { console.log('Fetching /friends'); }
-	    var friend_response=await fetch('/friends');
-	    var friend_stuff=await friend_response.text();
-	    
-	    // Convert the text into JSON.
-	    var friends=JSON.parse(friend_stuff);
+	    try {
+		// Get the friends JSON.
+		if(verbose>=1) { console.log('Fetching /friends'); }
+		var friend_response=await fetch('/friends');
+		var friend_stuff=await friend_response.text();
+		
+		// Convert the text into JSON.
+		var friends=JSON.parse(friend_stuff);
+	    }
+	    catch(err) {
+		console.log('Friends error: '+err);
+	    }
 	}
     
-	// Get the stuff JSON.
-	if(verbose) { console.log('Fetching /json'); }
-	var stuff_response=await fetch('/json');
-	var stuff_stuff=await stuff_response.text();
-	
-	// Convert the text into JSON.
-	stuff=JSON.parse(stuff_stuff);
-	
-	console.log(stuff)
+	try {
+	    // Get the stuff JSON.
+	    if(verbose>=1) { console.log('Fetching /json'); }
+	    var stuff_response=await fetch('/json');
+	    var stuff_stuff=await stuff_response.text();
+	    
+	    // Convert the text into JSON.
+	    stuff=JSON.parse(stuff_stuff);
+	    
+	    if(verbose>0) { console.log(stuff); }
+	}
+	catch(err) {
+	    console.log('Stuff error: '+err);
+	}
 	
 	// Find my own lat/lon. ToDo: This could be much better. In
 	// fact, this should work the same way as the 'from distance'
@@ -172,6 +277,35 @@ var intervalId=setInterval(async function() {
 		mygrid=value.stuff.grid;
 		mylat=value.stuff.lat;
 		mylon=value.stuff.lon;
+	    }
+	}
+
+	// Find the 'groups' table.
+	var table=document.getElementById('groups');
+	for (var g in display_groups) {
+	    var row=document.getElementById(display_groups[g]);
+	    if(row) {
+		var cell=row.cells[1];
+		cell.innerHTML=groups_call.get(display_groups[g]).length;
+		var cell=row.cells[2];
+		var newg=new Array();
+		groups_call.get(display_groups[g]).map(function (n) {
+		    newg.push(qrz(n,n,false));
+		});
+		cell.innerHTML=newg.join(', ');
+	    } else {
+		row=table.insertRow(0);
+		row.id=display_groups[g];
+		var cell=row.insertCell(-1);
+		cell.innerHTML=display_groups[g];
+		var cell=row.insertCell(-1);
+		cell.innerHTML=groups_call.get(display_groups[g]).length;
+		var cell=row.insertCell(-1);
+		var newg=new Array();
+		groups_call.get(display_groups[g]).map(function (n) {
+		    newg.push(qrz(n,n,false));
+		});
+		cell.innerHTML=newg.join(', ');
 	    }
 	}
 
@@ -212,6 +346,9 @@ var intervalId=setInterval(async function() {
 	    }
 	}
     }
+
+    // yyy
+    first_time=false;
 
     // Find the 'traffic' table.
     var table=document.getElementById('traffic');
@@ -256,9 +393,9 @@ var intervalId=setInterval(async function() {
 	    if(rx.from_call==mycall && mygrid) {
 		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+mygrid+info;
 	    } else if(rx.from_grid==false) {
-		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+info;
+		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />Grid: Unknown'+info;
 	    } else {
-		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />'+rx.from_grid+info;
+		cell.innerHTML='<img src="/flags/'+rx.from_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.from_call+'<br />Grid: '+rx.from_grid+info;
 	    }
 	    if(f) {
 		if(f[1]!='') {
@@ -273,11 +410,9 @@ var intervalId=setInterval(async function() {
 	    } else {
 		var address=rx.from_country;
 	    }
-	    cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.from_call+
-		'&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;PSKR</a>'+
-		'<br />'+
-		'<a href="https://qrz.com/db/'+rx.from_call+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;QRZ</a>'+
-		'<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;Map</a>';
+	    cell.innerHTML=pskreporter(rx.from_call,'PSKR',true)+'<br />'+
+		qrz(rx.from_call,'QRZ',true)+'<br />'+
+		gmaps(address,'Map',true);
 	    
 	    // To
 	    var cell=row.insertCell(-1);
@@ -290,6 +425,10 @@ var intervalId=setInterval(async function() {
 	    if(rx.to_call[0]=='@') {
 		cell.style.backgroundColor=colors.at;
 		var flag=false;
+		update_calls_groups(rx.from_call,rx.to_call);
+		if(rx.to_call!='@HB' && rx.to_call!='@ALLCALL') {
+		    recent_at.set(rx.from_call,[rx.to_call,rx.stuff.time]);
+		}
 	    } else {
 		var flag=true;
 	    }
@@ -306,15 +445,16 @@ var intervalId=setInterval(async function() {
 		cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />'+mygrid+info;
 	    } else if(rx.to_grid==false) {
 		if(flag) {
-		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+info;
+		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />Grid: Unknown'+info;
 		} else {
-		    cell.innerHTML=rx.to_call+info;
+		    cell.innerHTML=rx.to_call;
 		}
 	    } else {
 		if(flag) {
-		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />'+rx.to_grid+info;
+		    cell.innerHTML='<img src="/flags/'+rx.to_flag+'" alt="" width="36" />&nbsp;&nbsp;'+rx.to_call+'<br />Grid: '+rx.to_grid+info;
 		} else {
-		    cell.innerHTML=rx.to_call+'<br />'+rx.to_grid+info;
+		    //cell.innerHTML=rx.to_call+'<br />'+rx.to_grid+info;
+		    cell.innerHTML=rx.to_call+'<br />'+rx.to_grid+" This shouldn't happen";
 		}
 	    }
 	    if(f) {
@@ -331,11 +471,9 @@ var intervalId=setInterval(async function() {
 		var address=rx.to_country;
 	    }
 	    if(rx.to_call[0]!='@') {
-		cell.innerHTML='<a href="https://pskreporter.info/pskmap.html?preset&callsign='+rx.to_call+
-		    '&timerange=1500&hideunrec=1&blankifnone=1&hidepink=1&showsnr=1&showlines=1" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;PSKR</a>'+
-		    '<br />'+
-		    '<a href="https://qrz.com/db/'+rx.to_call+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;QRZ</a>'+
-		    '<br /><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)+'" target="_blank"><img src="/svg/globe.svg" alt="" width="15" height="15" />&nbsp;Map</a>';
+		cell.innerHTML=pskreporter(rx.to_call,'PSKR',true)+'<br />'+
+		    qrz(rx.to_call,'QRZ',true)+'<br />'+
+		    gmaps(address,'Map',true);
 	    } else {
 		cell.innerHTML='<img src="/svg/globe_grey.svg" alt="" width="24" height="24" />';
 	    }
@@ -450,6 +588,11 @@ var intervalId=setInterval(async function() {
 		      (khz >= 7110 && khz <= 7114) ||
 		      (khz >= 14110 && khz <= 14114)) {
 		cell.style.backgroundColor=colors.non_zombie_traffic;
+		// todo: revisit this (below)
+		update_calls_groups(rx.from_call,'@AMRRON');
+		if(rx.to_call[0]!='@') {
+		    update_calls_groups(rx.to_call,'@AMRRON');
+		}
 		img='/jpg/amrron.jpg';
 	    } else if(rx.to_call=='@CORAC') {
 		cell.style.backgroundColor=colors.non_zombie_traffic;
@@ -493,10 +636,29 @@ var intervalId=setInterval(async function() {
 	    } else {
 		cell.innerHTML=rx.text;
 	    }
+
+	    // Process any replies to @ destinations.
+	    if(recent_at.get(rx.to_call)) {
+		if(recent_at.get(rx.to_call)[1]<=timet()-65) {
+		    update_calls_groups(rx.from_call,recent_at.get(rx.to_call)[0]);
+		}
+	    }
+	    // ToDo: Purge outdata data so it doesn't grow forever.
+
 	} else {
 	    // Age
 	    var cell=row.cells[7];
 	    cell.innerHTML=new Date(Math.round(now-rx.stuff.time)*1000).toISOString().substr(11,8);
+
+	    // To
+	    // Code below puts all calls in each instance of an @, but
+	    // distorts the output. ToDo: Think about this.
+//	    var cell=row.cells[3];
+//	    if(rx.to_call[0]=='@' && rx.to_call!='@HB' && rx.to_call!='@ALLCALL') {
+//		if(groups_call.get(rx.to_call)) {
+//		    cell.innerHTML=rx.to_call+': '+groups_call.get(rx.to_call).join(', ');
+//		}
+//	    }
 	}
 
 	// Delete the expired traffic rows.
@@ -506,5 +668,5 @@ var intervalId=setInterval(async function() {
 	}
     }
 
-    first_time=false
+    first_time=false;
 },1000);

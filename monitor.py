@@ -561,7 +561,7 @@ def main_page ():
         with tag('head'):
             with tag('style'):
                 text(css)
-        with tag('body'):
+        with tag('body',style='background-color:#FFFFFF'):
             with open(basedir+'monitor.js','r') as file:
                 js=file.read()
             with tag('script',type='text/javascript'):
@@ -570,6 +570,12 @@ def main_page ():
                 with tag('h1'):
                     text('Stations')
                 with tag('table',id='stations',klass='styled-table'):
+                    pass
+                with tag('br'):
+                    pass
+                with tag('h1'):
+                    text('Detected Groups')
+                with tag('table',id='groups',klass='styled-table'):
                     pass
                 with tag('br'):
                     pass
@@ -603,6 +609,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(str.encode(main_page()))
+        if(self.path=='/favicon.ico'):
+            self.send_response(200)
+            self.send_header('Content-type','application/json')
+            self.end_headers()
         if(self.path=='/colors'):
             self.send_response(200)
             self.send_header('Content-type','application/json')

@@ -901,8 +901,10 @@ if(__name__ == '__main__'):
         basedir= config['MONITOR'].get('BASEDIR', expanduser("~")+'/.js8net/')
         max_age   =   int(config['MONITOR'].get('MAXAGE',3600))
         print('Max age: '+str(max_age))
-        localhost  =   config['MONITOR'].get('LOCALHOST', False)
-
+        clocalhost  =   config['MONITOR'].get('LOCALHOST', False)
+        toBool = {'True':True, 'False':False}
+        localhost=toBool[clocalhost]
+        
     else:
 
         if(args.call):

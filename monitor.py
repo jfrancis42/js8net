@@ -10,6 +10,7 @@ import time
 import json
 import argparse
 import requests
+import bleach
 import uuid
 import csv
 import maidenhead as mh
@@ -857,7 +858,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     # Freq
                     j['freq']=j['stuff']['params']['FREQ']
                     # Text
-                    j['text']=j['stuff']['params']['TEXT']
+                    j['text']=bleach.clean(j['stuff']['params']['TEXT'])
                     key=str(j['stuff']['time'])
                     # Todo: later, del(j['stuff']) once we've stolen everything we need (to save size)
                     # Set the ID

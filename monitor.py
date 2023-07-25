@@ -858,7 +858,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     # Freq
                     j['freq']=j['stuff']['params']['FREQ']
                     # Text
-                    j['text']=bleach.clean(j['stuff']['params']['TEXT'])
+                    j['text']=bleach.clean(j['stuff']['params']['TEXT'],
+                                           tags={})
                     key=str(j['stuff']['time'])
                     # Todo: later, del(j['stuff']) once we've stolen everything we need (to save size)
                     # Set the ID

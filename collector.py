@@ -11,7 +11,6 @@ from js8net import *
 #import pdb
 import requests
 import uuid
-import json
 import re
 
 global js8host

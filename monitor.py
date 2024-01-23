@@ -29,6 +29,7 @@ import datetime
 from js8net import *
 import pyproj
 import dbm
+import configparser
 
 global max_age
 global listen
@@ -879,43 +880,67 @@ if(__name__ == '__main__'):
     parser.add_argument('--listen',default=False,help='Listen port for collector traffic (default 8000)')
     parser.add_argument('--basedir',default=False,help='Monitor program directory (default is ~/.js8net/)')
     parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
-    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)',
-                        action='store_true')
+    parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)', action='store_true')
+    parser.add_argument('--js8_config',default=False,help='Path and file name of monitor config file')
 
     args=parser.parse_args()
 
-    if(args.call):
-        mycall=args.call.upper()
-    else:
-        mycall=False
-    if(mycall):
+    if(args.js8_config):
+        #read config file for collector here
+        #can be shared between collector and monitor if only one js8call instance running
+        js8_config=args.js8_config
+        config=configparser.ConfigParser()
+        try:
+            config.read(js8_config)
+            print('Config File: ',js8_config)
+        except:
+            print('Config File Not Found: ',js8_config)
+
+        mycall =   config['MONITOR'].get('MYCALL', 'False').upper()
         print('My call sign: '+mycall)
-
-    if(args.listen):
-        listen=int(args.listen)
+        listen =   int(config['MONITOR'].get('LISTEN', 8000))
+        print('Listening on port: '+str(listen))
+        basedir= config['MONITOR'].get('BASEDIR', expanduser("~")+'/.js8net/')
+        max_age   =   int(config['MONITOR'].get('MAXAGE',3600))
+        print('Max age: '+str(max_age))
+        clocalhost  =   config['MONITOR'].get('LOCALHOST', False)
+        toBool = {'True':True, 'False':False}
+        localhost=toBool[clocalhost]
+        
     else:
-        listen=8000
-    print('Listening on port: '+str(listen))
 
-    if(args.basedir):
-        basedir=args.basedir
-        if(basedir[-1]!='/'):
-           basedir=basedir+'/'
-    else:
-        basedir=expanduser("~")+'/.js8net/'
-        if(not(exists(basedir))):
-            mkdir(basedir)
+        if(args.call):
+            mycall=args.call.upper()
+        else:
+            mycall=False
+        if(mycall):
+            print('My call sign: '+mycall)
 
-    if(args.max_age):
-        max_age=int(args.max_age)
-    else:
-        max_age=3600
-    print('Max age: '+str(max_age))
+        if(args.listen):
+            listen=int(args.listen)
+        else:
+            listen=8000
+        print('Listening on port: '+str(listen))
 
-    if(args.localhost):
-        localhost=True
-    else:
-        localhost=False
+        if(args.basedir):
+            basedir=args.basedir
+            if(basedir[-1]!='/'):
+                basedir=basedir+'/'
+        else:
+            basedir=expanduser("~")+'/.js8net/'
+            if(not(exists(basedir))):
+                mkdir(basedir)
+
+        if(args.max_age):
+            max_age=int(args.max_age)
+        else:
+            max_age=3600
+        print('Max age: '+str(max_age))
+
+        if(args.localhost):
+            localhost=True
+        else:
+            localhost=False
 
 #    pdb.set_trace()
     if(localhost):

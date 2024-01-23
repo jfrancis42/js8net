@@ -12,8 +12,10 @@ from js8net import *
 import requests
 import uuid
 import re
+import configparser
 
 global js8host
+global js8config
 global js8port
 global mycall
 global mygrid
@@ -136,11 +138,13 @@ if(__name__ == '__main__'):
     parser.add_argument('--aggregator',default=False,help='Aggregator to send traffic to (default is localhost:8000)')
     parser.add_argument('--uuid',default=False,help='Use a specific UUID (default is auto-generate)')
     parser.add_argument('--radio',default=False,help='Type/model of radio (used for display only)')
-    parser.add_argument('--transmit',default=False,help='This station allowed to transmit (default is rx only)',
-                        action='store_true')
+    parser.add_argument('--transmit',default=False,help='This station allowed to transmit (default is rx only', action='store_true')
+    parser.add_argument('--js8_config',default=False,help='Path and file name of collector config file')
+
     args=parser.parse_args()
 
     js8host=False
+    js8_config=False
     js8port=False
 
     mycall='unknown'
@@ -150,30 +154,47 @@ if(__name__ == '__main__'):
     
     tx_allowed=args.transmit
 
-    if(args.js8_host):
-        js8host=args.js8_host
-    else:
-        js8host='localhost'
+    if(args.js8_config):
+        #read config file for collector here
+        #can be shared between collector and monitor if only one js8call instance running
+        js8_config=args.js8_config
+        config=configparser.ConfigParser()
+        try:
+            config.read(js8_config)
+        except:
+            print('Config File Not Found: ',js8_config)
 
-    if(args.js8_port):
-        js8port=int(args.js8_port)
-    else:
-        js8port=2442
+        js8host =   config['COLLECTOR'].get('JS8HOST', 'localhost')
+        js8port =   config['COLLECTOR'].get('JS8PORT', 2442)
+        aggregator= config['COLLECTOR'].get('AGGREGATOR', 'localhost:8000')
+        radio   =   config['COLLECTOR'].get('RADIO','unknown')
+        myuuid  =   config['COLLECTOR'].get('UUID', str(uuid.uuid4()))
 
-    if(args.aggregator):
-        aggregator=args.aggregator
     else:
-        aggregator='localhost:8000'
+        if(args.js8_host):
+            js8host=args.js8_host
+        else:
+            js8host='localhost'
 
-    if(args.radio):
-        radio=args.radio
-    else:
-        radio='unknown'
+        if(args.js8_port):
+            js8port=int(args.js8_port)
+        else:
+            js8port=2442
 
-    if(args.uuid):
-        myuuid=args.uuid
-    else:
-        myuuid=str(uuid.uuid4())
+        if(args.aggregator):
+            aggregator=args.aggregator
+        else:
+            aggregator='localhost:8000'
+
+        if(args.radio):
+            radio=args.radio
+        else:
+            radio='unknown'
+
+        if(args.uuid):
+            myuuid=args.uuid
+        else:
+            myuuid=str(uuid.uuid4())
 
     print('Connecting to JS8Call...')
     start_net(js8host,js8port)

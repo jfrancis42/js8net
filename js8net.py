@@ -52,6 +52,7 @@ global last_rx
 global mycall
 global messages
 global call_activity
+global call_selected
 global band_activity
 
 spots={}
@@ -270,6 +271,7 @@ def rx_thread(name):
     global tx_text
     global rx_text
     global call_activity
+    global call_selected
     global band_activity
     n=0
     left=False
@@ -340,6 +342,8 @@ def rx_thread(name):
                         else:
                            ptt=False
                     elif(message['type']=="RX.CALL_SELECTED"):
+                        #RSJC
+                        call_selected=message['value']
                         processed=True
                     elif(message['type']=="TX.FRAME"):
                         processed=True
@@ -608,7 +612,18 @@ def get_call_selected():
     # name that it returns the value of whichever callsign has been
     # clicked on in the right window, but I haven't gotten 'round to
     # testing this theory. ToDo: figure this out
+    # RSJC - Yes that is exactly what it does, need this functionality for my telegram bot
+    # Have added below to get the value
+    global call_selected
+    call_selected=False
     queue_message({"params":{},"type":"RX.GET_CALL_SELECTED","value":""})
+    now=time.time()
+    while(not(call_selected)):
+        if(time.time()>now+timeout):
+            return(False)
+        time.sleep(0.1)
+    print(call_selected)
+    return(call_selected)
 
 def get_band_activity():
     # Get the contents of the left white window.

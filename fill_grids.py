@@ -9,11 +9,11 @@ import argparse
 # Main program.
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description='Test Script')
-    parser.add_argument('--js8_host',default=False,help='IP/DNS of JS8Call server (default localhost)')
-    parser.add_argument('--js8_port',default=False,help='TCP port of JS8Call server (default 2442)')
-    parser.add_argument("--fill_time",default=False,help="How far back to fill in (default 600 seconds)")
-    parser.add_argument("--sleep_time",default=False,help="How long to sleep between requests (default 120 seconds)")
-    parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
+    parser.add_argument('--js8-host',default=False,help='IP/DNS of JS8Call server (default localhost)')
+    parser.add_argument('--js8-port',default=False,help='TCP port of JS8Call server (default 2442)')
+    parser.add_argument("--fill-time",default=False,help="How far back to fill in (default 600 seconds)")
+    parser.add_argument("--sleep-time",default=False,help="How long to sleep between requests (default 120 seconds)")
+    parser.add_argument("--freq-audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
     args=parser.parse_args()
 
     js8host=False

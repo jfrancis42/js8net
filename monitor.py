@@ -878,7 +878,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--call',default=False,help='My call')
     parser.add_argument('--listen',default=False,help='Listen port for collector traffic (default 8000)')
     parser.add_argument('--basedir',default=False,help='Monitor program directory (default is ~/.js8net/)')
-    parser.add_argument('--max_age',default=False,help='Maximum traffic age (default 3600 seconds)')
+    parser.add_argument('--max-age',default=False,help='Maximum traffic age (default 3600 seconds)')
     parser.add_argument('--localhost',default=False,help='Bind to localhost only (default 0.0.0.0)',
                         action='store_true')
 

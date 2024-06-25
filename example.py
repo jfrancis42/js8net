@@ -12,8 +12,8 @@ from js8net import *
 # Main program.
 if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description="Example of using js8net.py")
-    parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
-    parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
+    parser.add_argument("--js8-host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
+    parser.add_argument("--js8-port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
     parser.add_argument("--clean",default=False,action="store_true",help="Start with clean spots (ie, don't load spots.json)")
     parser.add_argument("--env",default=False,action="store_true",help="Use environment variables (cli options override)")
     parser.add_argument("--listen",default=False,action="store_true",help="Listen only - do not write files")

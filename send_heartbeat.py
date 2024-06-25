@@ -10,12 +10,12 @@ from js8net import *
 # Main program.
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description="Send JS8Call Heartbeat.")
-    parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
-    parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
+    parser.add_argument("--js8-host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
+    parser.add_argument("--js8-port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
     parser.add_argument("--grid",default=False,help="Override configured grid square")
     parser.add_argument("--freq",default=False,help="Specify transmit freq (hz, ex: 7079000)")
-    parser.add_argument("--freq_dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
-    parser.add_argument("--freq_audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
+    parser.add_argument("--freq-dial",default=False,help="Specify dial freq (hz, ex: 7078000)")
+    parser.add_argument("--freq-audio",default=False,help="Specify transmit offset freq (hz, ex: 1000)")
     parser.add_argument("--speed",default=False,help="Specify transmit speed (slow==4, normal==0, fast==1, turbo==2)")
     parser.add_argument("--env",default=False,action="store_true",help="Use environment variables (cli options override)")
     parser.add_argument("--verbose",default=False,action="store_true",help="Lots of status messages")

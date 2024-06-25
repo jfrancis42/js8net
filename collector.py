@@ -131,8 +131,8 @@ def station_thread(name):
 # Main program.
 if(__name__ == '__main__'):
     parser=argparse.ArgumentParser(description='JS8call data collector.')
-    parser.add_argument('--js8_host',default=False,help='IP/DNS of JS8Call server (default localhost)')
-    parser.add_argument('--js8_port',default=False,help='TCP port of JS8Call server (default 2442)')
+    parser.add_argument('--js8-host',default=False,help='IP/DNS of JS8Call server (default localhost)')
+    parser.add_argument('--js8-port',default=False,help='TCP port of JS8Call server (default 2442)')
     parser.add_argument('--aggregator',default=False,help='Aggregator to send traffic to (default is localhost:8000)')
     parser.add_argument('--uuid',default=False,help='Use a specific UUID (default is auto-generate)')
     parser.add_argument('--radio',default=False,help='Type/model of radio (used for display only)')

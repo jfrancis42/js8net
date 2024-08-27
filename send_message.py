@@ -46,7 +46,7 @@ if __name__ == "__main__":
         js8port=2442
 
     if(not(args.msg and args.call)):
-        print("--msg and --addr are mandatory")
+        print("--msg and --call are mandatory")
     else:
         if(args.verbose):
             print("Connecting to JS8Call...")

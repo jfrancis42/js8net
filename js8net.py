@@ -74,7 +74,7 @@ def calc_band(freq):
         return("30m")
     elif(freq>=14000000 and freq<=14350000):
         return("20m")
-    elif(freq>=17068000 and freq<=17168000):
+    elif(freq>=18068000 and freq<=18168000):
         return("17m")
     elif(freq>=21000000 and freq<=21450000):
         return("15m")

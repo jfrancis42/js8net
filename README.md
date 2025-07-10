@@ -1,6 +1,10 @@
 # js8net
 
-#### _Jeff Francis <jeff@gritch.org>_, N0GQ
+#### _Jeff Francis <gjfrancis@protonmail.com>_, N0GQ
+
+# Note: I am currently reviewing the functionality of this library with the latest JS8Call release (v2.3.1 as of this writing). Preliminary indications are that the dev team did not touch the API code, and the few early tests I've done all worked the same as before (ie, all of the same things are working and broken of the items I've tested so far).
+
+# I've taken the opportunity to dive into fixing the existing broken API calls in JS8 (there are many), as well as adding all of the obvious things that are missing (there are many of these, as well). Happy to hear feedback on what API calls you'd like to see. I'm planning on contacting the JS8 dev team once I finish a few more fixes and additions to see if they'll consider fixing the API dumpster fire.
 
 ## The Library
 
